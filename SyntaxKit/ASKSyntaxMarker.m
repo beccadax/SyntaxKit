@@ -15,76 +15,76 @@ NSString * const ASKSyntaxModeAttributeName = @"ASKSyntaxMode";
 @implementation ASKSyntaxMarker
 
 - (void)markRange:(NSRange)range ofAttributedString:(NSMutableAttributedString *)string withSyntax:(ASKSyntax *)syntax {
-		// Kludge fix for case where we sometimes exceed text length:ra
-		NSInteger diff = [string length] -(range.location +range.length);
-		if( diff < 0 )
-			range.length += diff;
-        
-		// Get the text we'll be working with:
-		NSMutableAttributedString*	vString = [string mutableCopy];
-        [vString removeAttribute:ASKSyntaxModeAttributeName range:range];
-        
-		// Load colors and fonts to use from preferences:
-		// Load our dictionary which contains info on coloring this language:
-		NSDictionary*				vSyntaxDefinition = syntax.definition;
-        
-		for(NSDictionary *vCurrComponent in vSyntaxDefinition[@"Components"])
-		{
-			NSString*   vComponentType = vCurrComponent[@"Type"];
-			NSString*   vComponentName = vCurrComponent[@"Name"];
+    // Kludge fix for case where we sometimes exceed text length:ra
+    NSInteger diff = [string length] -(range.location +range.length);
+    if( diff < 0 )
+        range.length += diff;
+    
+    // Get the text we'll be working with:
+    NSMutableAttributedString*	vString = [string mutableCopy];
+    [vString removeAttribute:ASKSyntaxModeAttributeName range:range];
+    
+    // Load colors and fonts to use from preferences:
+    // Load our dictionary which contains info on coloring this language:
+    NSDictionary*				vSyntaxDefinition = syntax.definition;
+    
+    for(NSDictionary *vCurrComponent in vSyntaxDefinition[@"Components"])
+    {
+        NSString*   vComponentType = vCurrComponent[@"Type"];
+        NSString*   vComponentName = vCurrComponent[@"Name"];
 //			NSString*   vColorKeyName = [@"SyntaxColoring:Color:" stringByAppendingString: vComponentName];
 //			NSColor*	vColor = [[vPrefs arrayForKey: vColorKeyName] colorValue];
-			
+        
 //			if( !vColor )
 //				vColor = [vCurrComponent[@"Color"] colorValue];
-			
-			if( [vComponentType isEqualToString: @"BlockComment"] )
-			{
-				[self markCommentsFrom: vCurrComponent[@"Start"]
-                                     to: vCurrComponent[@"End"] inString: vString
-                              withMode: vComponentName];
-			}
-			else if( [vComponentType isEqualToString: @"OneLineComment"] )
-			{
-				[self markOneLineComment: vCurrComponent[@"Start"]
-                                 inString: vString withMode: vComponentName];
-			}
-			else if( [vComponentType isEqualToString: @"String"] )
-			{
-				[self markStringsFrom: vCurrComponent[@"Start"]
-                                    to: vCurrComponent[@"End"]
-                              inString: vString withMode: vComponentName
-                         andEscapeChar: vCurrComponent[@"EscapeChar"]]; 
-			}
-			else if( [vComponentType isEqualToString: @"Tag"] )
-			{
-				[self markTagFrom: vCurrComponent[@"Start"]
-                                to: vCurrComponent[@"End"] inString: vString
-                         withMode: vComponentName
-                      exceptIfMode: vCurrComponent[@"IgnoredComponent"]];
-			}
-			else if( [vComponentType isEqualToString: @"Keywords"] )
-			{
-				NSArray* vIdents = vCurrComponent[@"Keywords"];
-				if( !vIdents ) {
-					vIdents = [self.delegate syntaxMarker:self userIdentifiersForKeywordMode:vComponentName];
+        
+        if( [vComponentType isEqualToString: @"BlockComment"] )
+        {
+            [self markCommentsFrom: vCurrComponent[@"Start"]
+                                 to: vCurrComponent[@"End"] inString: vString
+                          withMode: vComponentName];
+        }
+        else if( [vComponentType isEqualToString: @"OneLineComment"] )
+        {
+            [self markOneLineComment: vCurrComponent[@"Start"]
+                             inString: vString withMode: vComponentName];
+        }
+        else if( [vComponentType isEqualToString: @"String"] )
+        {
+            [self markStringsFrom: vCurrComponent[@"Start"]
+                                to: vCurrComponent[@"End"]
+                          inString: vString withMode: vComponentName
+                     andEscapeChar: vCurrComponent[@"EscapeChar"]]; 
+        }
+        else if( [vComponentType isEqualToString: @"Tag"] )
+        {
+            [self markTagFrom: vCurrComponent[@"Start"]
+                            to: vCurrComponent[@"End"] inString: vString
+                     withMode: vComponentName
+                  exceptIfMode: vCurrComponent[@"IgnoredComponent"]];
+        }
+        else if( [vComponentType isEqualToString: @"Keywords"] )
+        {
+            NSArray* vIdents = vCurrComponent[@"Keywords"];
+            if( !vIdents ) {
+                vIdents = [self.delegate syntaxMarker:self userIdentifiersForKeywordMode:vComponentName];
+            }
+            if( vIdents )
+            {
+                NSCharacterSet*		vIdentCharset = nil;
+                NSString*			vCsStr = vCurrComponent[@"Charset"];
+                if( vCsStr )
+                    vIdentCharset = [NSCharacterSet characterSetWithCharactersInString: vCsStr];
+                
+                for( NSString * vCurrIdent in vIdents ) {
+                    [self markIdentifier: vCurrIdent inString: vString withMode: vComponentName charset: vIdentCharset];
                 }
-				if( vIdents )
-				{
-					NSCharacterSet*		vIdentCharset = nil;
-					NSString*			vCsStr = vCurrComponent[@"Charset"];
-					if( vCsStr )
-						vIdentCharset = [NSCharacterSet characterSetWithCharactersInString: vCsStr];
-					
-					for( NSString * vCurrIdent in vIdents ) {
-						[self markIdentifier: vCurrIdent inString: vString withMode: vComponentName charset: vIdentCharset];
-                    }
-				}
-			}
-		}
-		
-		// Replace the range with our recolored part:
-		[string replaceCharactersInRange: range withAttributedString: vString];
+            }
+        }
+    }
+    
+    // Replace the range with our recolored part:
+    [string replaceCharactersInRange: range withAttributedString: vString];
 }
 
 -(NSDictionary*)	textAttributesForComponentName: (NSString*)attr {

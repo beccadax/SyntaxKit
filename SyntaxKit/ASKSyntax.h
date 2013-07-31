@@ -28,8 +28,6 @@
 
 #import <Foundation/Foundation.h>
 
-#define TD_USER_DEFINED_IDENTIFIERS			@"SyntaxColoring:UserIdentifiers"		// Key in user defaults holding user-defined identifiers to colorize.
-
 @protocol ASKSyntaxDelegate;
 
 @interface ASKSyntax : NSObject

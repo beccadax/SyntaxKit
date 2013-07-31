@@ -76,9 +76,9 @@
                 
                 if( !vColor ) {
                     // XXX this loop is a temporary hack
-                    for(NSDictionary * vCurrComponent in syntax.components) {
-                        if([vCurrComponent[@"Name"] isEqualToString:mode]) {
-                            vColor = [vCurrComponent[@"Color"] colorValue];
+                    for(ASKSyntaxComponent * vCurrComponent in syntax.components) {
+                        if([vCurrComponent.definition[@"Name"] isEqualToString:mode]) {
+                            vColor = [vCurrComponent.definition[@"Color"] colorValue];
                         }
                     }
                 }

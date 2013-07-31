@@ -46,46 +46,46 @@ NSString * const ASKSyntaxModeAttributeName = @"ASKSyntaxMode";
     
     // Load colors and fonts to use from preferences:
     // Load our dictionary which contains info on coloring this language:
-    for(NSDictionary *vCurrComponent in syntax.components)
+    for(ASKSyntaxComponent *vCurrComponent in syntax.components)
     {
-        NSString*   vComponentType = vCurrComponent[@"Type"];
-        NSString*   vComponentName = vCurrComponent[@"Name"];
+        NSString*   vComponentType = vCurrComponent.definition[@"Type"];
+        NSString*   vComponentName = vCurrComponent.definition[@"Name"];
         
         if( [vComponentType isEqualToString: @"BlockComment"] )
         {
-            [self markCommentsFrom: vCurrComponent[@"Start"]
-                                 to: vCurrComponent[@"End"] inString: vString
+            [self markCommentsFrom: vCurrComponent.definition[@"Start"]
+                                 to: vCurrComponent.definition[@"End"] inString: vString
                           withMode: vComponentName];
         }
         else if( [vComponentType isEqualToString: @"OneLineComment"] )
         {
-            [self markOneLineComment: vCurrComponent[@"Start"]
+            [self markOneLineComment: vCurrComponent.definition[@"Start"]
                              inString: vString withMode: vComponentName];
         }
         else if( [vComponentType isEqualToString: @"String"] )
         {
-            [self markStringsFrom: vCurrComponent[@"Start"]
-                                to: vCurrComponent[@"End"]
+            [self markStringsFrom: vCurrComponent.definition[@"Start"]
+                                to: vCurrComponent.definition[@"End"]
                           inString: vString withMode: vComponentName
-                     andEscapeChar: vCurrComponent[@"EscapeChar"]]; 
+                     andEscapeChar: vCurrComponent.definition[@"EscapeChar"]]; 
         }
         else if( [vComponentType isEqualToString: @"Tag"] )
         {
-            [self markTagFrom: vCurrComponent[@"Start"]
-                            to: vCurrComponent[@"End"] inString: vString
+            [self markTagFrom: vCurrComponent.definition[@"Start"]
+                            to: vCurrComponent.definition[@"End"] inString: vString
                      withMode: vComponentName
-                  exceptIfMode: vCurrComponent[@"IgnoredComponent"]];
+                  exceptIfMode: vCurrComponent.definition[@"IgnoredComponent"]];
         }
         else if( [vComponentType isEqualToString: @"Keywords"] )
         {
-            NSArray* vIdents = vCurrComponent[@"Keywords"];
+            NSArray* vIdents = vCurrComponent.definition[@"Keywords"];
             if( !vIdents ) {
                 vIdents = [self.delegate syntaxMarker:self userIdentifiersForKeywordMode:vComponentName];
             }
             if( vIdents )
             {
                 NSCharacterSet*		vIdentCharset = nil;
-                NSString*			vCsStr = vCurrComponent[@"Charset"];
+                NSString*			vCsStr = vCurrComponent.definition[@"Charset"];
                 if( vCsStr )
                     vIdentCharset = [NSCharacterSet characterSetWithCharactersInString: vCsStr];
                 

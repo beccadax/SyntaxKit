@@ -20,16 +20,18 @@
 - (id)initWithDefinition:(NSDictionary *)definition {
     if((self = [super init])) {
         _definition = definition;
+        
+        NSMutableArray * components = [NSMutableArray new];
+        for(NSDictionary * def in _definition[@"Components"]) {
+            [components addObject:[[ASKSyntaxComponent alloc] initWithDefinition:def]];
+        }
+        _components = components;
     }
     return self;
 }
 
 - (id)initWithDefinitionURL:(NSURL *)URL {
     return [self initWithDefinition:[NSDictionary dictionaryWithContentsOfURL:URL]];
-}
-
-- (NSArray *)components {
-    return self.definition[@"Components"];
 }
 
 - (NSString *)oneLineCommentPrefix {

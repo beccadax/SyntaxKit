@@ -32,11 +32,6 @@ NSString * const ASKSyntaxModeAttributeName = @"ASKSyntaxMode";
     {
         NSString*   vComponentType = vCurrComponent[@"Type"];
         NSString*   vComponentName = vCurrComponent[@"Name"];
-//			NSString*   vColorKeyName = [@"SyntaxColoring:Color:" stringByAppendingString: vComponentName];
-//			NSColor*	vColor = [[vPrefs arrayForKey: vColorKeyName] colorValue];
-        
-//			if( !vColor )
-//				vColor = [vCurrComponent[@"Color"] colorValue];
         
         if( [vComponentType isEqualToString: @"BlockComment"] )
         {

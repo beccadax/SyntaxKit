@@ -13,6 +13,8 @@
 		8421689117A90D17007FAEAB /* ASKSyntaxColorist.m in Sources */ = {isa = PBXBuildFile; fileRef = 8421688F17A90D17007FAEAB /* ASKSyntaxColorist.m */; };
 		8421689417A911C4007FAEAB /* ASKSyntaxComponent.h in Headers */ = {isa = PBXBuildFile; fileRef = 8421689217A911C4007FAEAB /* ASKSyntaxComponent.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		8421689517A911C4007FAEAB /* ASKSyntaxComponent.m in Sources */ = {isa = PBXBuildFile; fileRef = 8421689317A911C4007FAEAB /* ASKSyntaxComponent.m */; };
+		8421689A17A9C8DC007FAEAB /* ASKSyntaxComponent+Marking.h in Headers */ = {isa = PBXBuildFile; fileRef = 8421689817A9C8DC007FAEAB /* ASKSyntaxComponent+Marking.h */; };
+		8421689B17A9C8DC007FAEAB /* ASKSyntaxComponent+Marking.m in Sources */ = {isa = PBXBuildFile; fileRef = 8421689917A9C8DC007FAEAB /* ASKSyntaxComponent+Marking.m */; };
 		842931BA17A0F0FD00A55E7C /* NSTextView+SyntaxKit.h in Headers */ = {isa = PBXBuildFile; fileRef = 842931B817A0F0FD00A55E7C /* NSTextView+SyntaxKit.h */; };
 		842931BB17A0F0FD00A55E7C /* NSTextView+SyntaxKit.m in Sources */ = {isa = PBXBuildFile; fileRef = 842931B917A0F0FD00A55E7C /* NSTextView+SyntaxKit.m */; };
 		842931BE17A1446E00A55E7C /* ASKSyntax.h in Headers */ = {isa = PBXBuildFile; fileRef = 842931BC17A1446E00A55E7C /* ASKSyntax.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -65,6 +67,8 @@
 		8421688F17A90D17007FAEAB /* ASKSyntaxColorist.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ASKSyntaxColorist.m; sourceTree = "<group>"; };
 		8421689217A911C4007FAEAB /* ASKSyntaxComponent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ASKSyntaxComponent.h; sourceTree = "<group>"; };
 		8421689317A911C4007FAEAB /* ASKSyntaxComponent.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ASKSyntaxComponent.m; sourceTree = "<group>"; };
+		8421689817A9C8DC007FAEAB /* ASKSyntaxComponent+Marking.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "ASKSyntaxComponent+Marking.h"; sourceTree = "<group>"; };
+		8421689917A9C8DC007FAEAB /* ASKSyntaxComponent+Marking.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "ASKSyntaxComponent+Marking.m"; sourceTree = "<group>"; };
 		842931B817A0F0FD00A55E7C /* NSTextView+SyntaxKit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSTextView+SyntaxKit.h"; sourceTree = "<group>"; };
 		842931B917A0F0FD00A55E7C /* NSTextView+SyntaxKit.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSTextView+SyntaxKit.m"; sourceTree = "<group>"; };
 		842931BC17A1446E00A55E7C /* ASKSyntax.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ASKSyntax.h; sourceTree = "<group>"; };
@@ -198,6 +202,8 @@
 				848113CC17A0C69E008C5A6F /* ASKLineNumberMarker.m */,
 				8421688A17A8FD00007FAEAB /* ASKSyntaxMarker.h */,
 				8421688B17A8FD00007FAEAB /* ASKSyntaxMarker.m */,
+				8421689817A9C8DC007FAEAB /* ASKSyntaxComponent+Marking.h */,
+				8421689917A9C8DC007FAEAB /* ASKSyntaxComponent+Marking.m */,
 				8421688E17A90D17007FAEAB /* ASKSyntaxColorist.h */,
 				8421688F17A90D17007FAEAB /* ASKSyntaxColorist.m */,
 				842931BC17A1446E00A55E7C /* ASKSyntax.h */,
@@ -264,6 +270,7 @@
 				8421688C17A8FD00007FAEAB /* ASKSyntaxMarker.h in Headers */,
 				8421689017A90D17007FAEAB /* ASKSyntaxColorist.h in Headers */,
 				8421689417A911C4007FAEAB /* ASKSyntaxComponent.h in Headers */,
+				8421689A17A9C8DC007FAEAB /* ASKSyntaxComponent+Marking.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -379,6 +386,7 @@
 				8421688D17A8FD00007FAEAB /* ASKSyntaxMarker.m in Sources */,
 				8421689117A90D17007FAEAB /* ASKSyntaxColorist.m in Sources */,
 				8421689517A911C4007FAEAB /* ASKSyntaxComponent.m in Sources */,
+				8421689B17A9C8DC007FAEAB /* ASKSyntaxComponent+Marking.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

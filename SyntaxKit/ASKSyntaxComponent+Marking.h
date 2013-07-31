@@ -1,5 +1,5 @@
 //
-//  ASKSyntaxMarker.m
+//  ASKSyntaxComponent+Marking.h
 //  SyntaxKit
 //
 //  Created by Uli Kusterer on 13.03.10.
@@ -26,33 +26,11 @@
 //	   distribution.
 //
 
+#import <SyntaxKit/SyntaxKit.h>
 #import "ASKSyntaxMarker.h"
-#import "ASKSyntax.h"
-#import "ASKSyntaxComponent+Marking.h"
 
-NSString * const ASKSyntaxModeAttributeName = @"ASKSyntaxMode";
+@interface ASKSyntaxComponent (Marking)
 
-@implementation ASKSyntaxMarker
-
-- (void)markRange:(NSRange)range ofAttributedString:(NSMutableAttributedString *)string withSyntax:(ASKSyntax *)syntax {
-    // Kludge fix for case where we sometimes exceed text length:ra
-    NSInteger diff = [string length] -(range.location +range.length);
-    if( diff < 0 )
-        range.length += diff;
-    
-    // Get the text we'll be working with:
-    NSMutableAttributedString*	vString = [string mutableCopy];
-    [vString removeAttribute:ASKSyntaxModeAttributeName range:range];
-    
-    // Load colors and fonts to use from preferences:
-    // Load our dictionary which contains info on coloring this language:
-    for(ASKSyntaxComponent *vCurrComponent in syntax.components)
-    {
-        [vCurrComponent marker:self markInString:vString];
-    }
-    
-    // Replace the range with our recolored part:
-    [string replaceCharactersInRange: range withAttributedString: vString];
-}
+- (void)marker:(ASKSyntaxMarker*)marker markInString:(NSMutableAttributedString*)string;
 
 @end

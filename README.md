@@ -107,8 +107,8 @@ Portions of the code that are original to SyntaxKit are distributed under the MI
 
 In general, consult the comments at the top of each file to see how that file is licensed; if you don't see a comment, you may assume it's SyntaxKit code carrying the MIT license.
 
-    [uksyntax]: https://github.com/uliwitness/UKSyntaxColoredTextDocument
-    [noodleline]: http://www.noodlesoft.com/blog/2008/10/05/displaying-line-numbers-with-nstextview/
-    [ingist]: https://itunes.apple.com/us/app/ingist/id680035328?mt=12
-    [gitflow]: http://nvie.com/git-model/
+[uksyntax]: https://github.com/uliwitness/UKSyntaxColoredTextDocument
+[noodleline]: http://www.noodlesoft.com/blog/2008/10/05/displaying-line-numbers-with-nstextview/
+[ingist]: https://itunes.apple.com/us/app/ingist/id680035328?mt=12
+[gitflow]: http://nvie.com/git-model/
 

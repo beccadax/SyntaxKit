@@ -34,28 +34,19 @@
 - (void)marker:(ASKSyntaxMarker *)marker markInString:(NSMutableAttributedString *)string {
     if( [self.type isEqualToString: @"BlockComment"] )
     {
-        [self marker:marker markCommentsFrom: self.start
-                            to: self.end inString: string
-                      withMode: self.name];
+        [self marker:marker markCommentsInString:string];
     }
     else if( [self.type isEqualToString: @"OneLineComment"] )
     {
-        [self marker:marker markOneLineComment: self.start
-                        inString: string withMode: self.name];
+        [self marker:marker markOneLineCommentInString:string];
     }
     else if( [self.type isEqualToString: @"String"] )
     {
-        [self marker:marker markStringsFrom: self.start
-                           to: self.end
-                     inString: string withMode: self.name
-                andEscapeChar: self.escapeChar]; 
+        [self marker:marker markStringsInString:string]; 
     }
     else if( [self.type isEqualToString: @"Tag"] )
     {
-        [self marker:marker markTagFrom: self.start
-                       to: self.end inString: string
-                 withMode: self.name
-             exceptIfMode: self.ignoredComponent];
+        [self marker:marker markTagInString:string];
     }
     else if( [self.type isEqualToString: @"Keywords"] )
     {
@@ -66,29 +57,26 @@
         if( vIdents )
         {
             for( NSString * vCurrIdent in vIdents ) {
-                [self marker:marker markIdentifier: vCurrIdent inString: string withMode: self.name charset: self.charset];
+                [self marker:marker markIdentifier:vCurrIdent inString: string];
             }
         }
     }
 }
 
--(NSDictionary*)	textAttributesForComponentName: (NSString*)attr {
-	return @{ ASKSyntaxModeAttributeName: attr };
+-(NSDictionary*)	textAttributes {
+	return @{ ASKSyntaxModeAttributeName: self.name };
 }
 
--(void)marker:(ASKSyntaxMarker*)marker markStringsFrom: (NSString*) startCh to: (NSString*) endCh inString: (NSMutableAttributedString*) s
-               withMode:(NSString*)attr andEscapeChar: (NSString*)vStringEscapeCharacter
+-(void)marker:(ASKSyntaxMarker*)marker markStringsInString: (NSMutableAttributedString*) s
 {
 	@try {
         NSScanner*			vScanner = [NSScanner scannerWithString: [s string]];
-        NSDictionary*		vStyles = [self textAttributesForComponentName: attr];
+        NSDictionary*		vStyles = [self textAttributes];
         BOOL				vIsEndChar = NO;
         unichar				vEscChar = '\\';
         
-        if( vStringEscapeCharacter )
-        {
-            if( [vStringEscapeCharacter length] != 0 )
-                vEscChar = [vStringEscapeCharacter characterAtIndex: 0];
+        if( [self.escapeChar length] != 0 ) {
+            vEscChar = [self.escapeChar characterAtIndex: 0];
         }
         
         while( ![vScanner isAtEnd] )
@@ -100,17 +88,17 @@
             [marker.delegate syntaxMarkerIsMarking:marker];
             
             // Look for start of string:
-            [vScanner scanUpToString: startCh intoString: nil];
+            [vScanner scanUpToString: self.start intoString: nil];
             vStartOffs = [vScanner scanLocation];
-            if( ![vScanner scanString:startCh intoString:nil] )
+            if( ![vScanner scanString:self.start intoString:nil] )
                 return;
             
             while( !vIsEndChar && ![vScanner isAtEnd] )	// Loop until we find end-of-string marker or our text to color is finished:
             {
-                [vScanner scanUpToString: endCh intoString: nil];
-                if( ([vStringEscapeCharacter length] == 0) || [[s string] characterAtIndex: ([vScanner scanLocation] -1)] != vEscChar )	// Backslash before the end marker? That means ignore the end marker.
+                [vScanner scanUpToString: self.end intoString: nil];
+                if( ([self.escapeChar length] == 0) || [[s string] characterAtIndex: ([vScanner scanLocation] -1)] != vEscChar )	// Backslash before the end marker? That means ignore the end marker.
                     vIsEndChar = YES;	// A real one! Terminate loop.
-                if( ![vScanner scanString:endCh intoString:nil] )	// But skip this char before that.
+                if( ![vScanner scanString:self.end intoString:nil] )	// But skip this char before that.
                     return;
                 
                 [marker.delegate syntaxMarkerIsMarking:marker];
@@ -128,13 +116,12 @@
 }
 
 
--(void)marker:(ASKSyntaxMarker*)marker markCommentsFrom: (NSString*) startCh to: (NSString*) endCh inString: (NSMutableAttributedString*) s
-                withMode:(NSString*)attr
+-(void)marker:(ASKSyntaxMarker*)marker markCommentsInString: (NSMutableAttributedString*) s
 {
 	@try
 	{
 		NSScanner*			vScanner = [NSScanner scannerWithString: [s string]];
-		NSDictionary*		vStyles = [self textAttributesForComponentName: attr];
+		NSDictionary*		vStyles = [self textAttributes];
 		
 		while( ![vScanner isAtEnd] )
 		{
@@ -142,14 +129,14 @@
             vEndOffs;
 			
 			// Look for start of multi-line comment:
-			[vScanner scanUpToString: startCh intoString: nil];
+			[vScanner scanUpToString: self.start intoString: nil];
 			vStartOffs = [vScanner scanLocation];
-			if( ![vScanner scanString:startCh intoString:nil] )
+			if( ![vScanner scanString:self.start intoString:nil] )
 				return;
             
 			// Look for associated end-of-comment marker:
-			[vScanner scanUpToString: endCh intoString: nil];
-			if( ![vScanner scanString: endCh intoString: nil] )
+			[vScanner scanUpToString: self.end intoString: nil];
+			if( ![vScanner scanString: self.end intoString: nil] )
             /*return*/;  // Don't exit. If user forgot trailing marker, indicate this by "bleeding" until end of string.
 			vEndOffs = [vScanner scanLocation];
 			
@@ -166,13 +153,12 @@
 }
 
 
--(void)marker:(ASKSyntaxMarker*)marker markOneLineComment: (NSString*) startCh inString: (NSMutableAttributedString*) s
-                  withMode:(NSString*)attr
+-(void)marker:(ASKSyntaxMarker*)marker markOneLineCommentInString: (NSMutableAttributedString*) s
 {
 	@try
 	{
 		NSScanner*			vScanner = [NSScanner scannerWithString: [s string]];
-		NSDictionary*		vStyles = [self textAttributesForComponentName: attr];
+		NSDictionary*		vStyles = [self textAttributes];
 		
 		while( ![vScanner isAtEnd] )
 		{
@@ -180,9 +166,9 @@
             vEndOffs;
 			
 			// Look for start of one-line comment:
-			[vScanner scanUpToString: startCh intoString: nil];
+			[vScanner scanUpToString: self.start intoString: nil];
 			vStartOffs = [vScanner scanLocation];
-			if( ![vScanner scanString:startCh intoString:nil] )
+			if( ![vScanner scanString:self.start intoString:nil] )
 				return;
             
 			// Look for associated line break:
@@ -210,20 +196,19 @@
 // -----------------------------------------------------------------------------
 
 -(void)marker:(ASKSyntaxMarker*)marker markIdentifier: (NSString*) ident inString: (NSMutableAttributedString*) s
-              withMode:(NSString*)attr charset: (NSCharacterSet*)cset
 {
 	@try
 	{
 		NSScanner*			vScanner = [NSScanner scannerWithString: [s string]];
-		NSDictionary*		vStyles = [self textAttributesForComponentName: attr];
+		NSDictionary*		vStyles = [self textAttributes];
 		NSUInteger			vStartOffs = 0;
 		
 		// Skip any leading whitespace chars, somehow NSScanner doesn't do that:
-		if( cset )
+		if( self.charset )
 		{
 			while( vStartOffs < [[s string] length] )
 			{
-				if( [cset characterIsMember: [[s string] characterAtIndex: vStartOffs]] )
+				if( [self.charset characterIsMember: [[s string] characterAtIndex: vStartOffs]] )
 					break;
 				vStartOffs++;
 			}
@@ -242,14 +227,14 @@
 			if( vStartOffs > 0 )	// Check that we're not in the middle of an identifier:
 			{
 				// Alphanum character before identifier start?
-				if( [cset characterIsMember: [[s string] characterAtIndex: (vStartOffs -1)]] )  // If charset is NIL, this evaluates to NO.
+				if( [self.charset characterIsMember: [[s string] characterAtIndex: (vStartOffs -1)]] )  // If charset is NIL, this evaluates to NO.
 					continue;
 			}
 			
 			if( (vStartOffs +[ident length] +1) < [s length] )
 			{
 				// Alphanum character following our identifier?
-				if( [cset characterIsMember: [[s string] characterAtIndex: (vStartOffs +[ident length])]] )  // If charset is NIL, this evaluates to NO.
+				if( [self.charset characterIsMember: [[s string] characterAtIndex: (vStartOffs +[ident length])]] )  // If charset is NIL, this evaluates to NO.
 					continue;
 			}
 			
@@ -266,13 +251,12 @@
 }
 
 
--(void)marker:(ASKSyntaxMarker*)marker markTagFrom: (NSString*) startCh to: (NSString*)endCh inString: (NSMutableAttributedString*) s
-           withMode:(NSString*)attr exceptIfMode: (NSString*)ignoreAttr
+-(void)marker:(ASKSyntaxMarker*)marker markTagInString: (NSMutableAttributedString*) s
 {
 	@try
 	{
 		NSScanner*			vScanner = [NSScanner scannerWithString: [s string]];
-		NSDictionary*		vStyles = [self textAttributesForComponentName: attr];
+		NSDictionary*		vStyles = [self textAttributes];
 		
 		while( ![vScanner isAtEnd] )
 		{
@@ -280,23 +264,23 @@
             vEndOffs;
 			
 			// Look for start of one-line comment:
-			[vScanner scanUpToString: startCh intoString: nil];
+			[vScanner scanUpToString: self.start intoString: nil];
 			vStartOffs = [vScanner scanLocation];
 			if( vStartOffs >= [s length] )
 				return;
 			NSString*   scMode = [s attribute:ASKSyntaxModeAttributeName atIndex:vStartOffs effectiveRange:NULL];
-			if( ![vScanner scanString:startCh intoString:nil] )
+			if( ![vScanner scanString:self.start intoString:nil] )
 				return;
 			
 			// If start lies in range of ignored style, don't colorize it:
-			if( ignoreAttr != nil && [scMode isEqualToString: ignoreAttr] )
+			if( self.ignoredComponent != nil && [scMode isEqualToString: self.ignoredComponent] )
 				continue;
             
 			// Look for matching end marker:
 			while( ![vScanner isAtEnd] )
 			{
 				// Scan up to the next occurence of the terminating sequence:
-				[vScanner scanUpToString: endCh intoString:nil];
+				[vScanner scanUpToString: self.end intoString:nil];
 				
 				// Now, if the mode of the end marker is not the mode we were told to ignore,
 				//  we're finished now and we can exit the inner loop:
@@ -304,8 +288,8 @@
 				if( vEndOffs < [s length] )
 				{
 					scMode = [s attribute:ASKSyntaxModeAttributeName atIndex:vEndOffs effectiveRange:NULL];
-					[vScanner scanString: endCh intoString: nil];   // Also skip the terminating sequence.
-					if( ignoreAttr == nil || ![scMode isEqualToString: ignoreAttr] )
+					[vScanner scanString: self.end intoString: nil];   // Also skip the terminating sequence.
+					if( self.ignoredComponent == nil || ![scMode isEqualToString: self.ignoredComponent] )
 						break;
 				}
 				

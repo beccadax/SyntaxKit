@@ -52,6 +52,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		8421688817A8D798007FAEAB /* README.md */ = {isa = PBXFileReference; lastKnownFileType = text; path = README.md; sourceTree = "<group>"; };
 		842931B817A0F0FD00A55E7C /* NSTextView+SyntaxKit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSTextView+SyntaxKit.h"; sourceTree = "<group>"; };
 		842931B917A0F0FD00A55E7C /* NSTextView+SyntaxKit.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSTextView+SyntaxKit.m"; sourceTree = "<group>"; };
 		842931BC17A1446E00A55E7C /* ASKSyntax.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ASKSyntax.h; sourceTree = "<group>"; };
@@ -133,6 +134,7 @@
 		8481137C17A0C5FE008C5A6F = {
 			isa = PBXGroup;
 			children = (
+				8421688817A8D798007FAEAB /* README.md */,
 				8481138F17A0C5FE008C5A6F /* SyntaxKit */,
 				848113A417A0C5FE008C5A6F /* SyntaxKitTests */,
 				8481138817A0C5FE008C5A6F /* Frameworks */,

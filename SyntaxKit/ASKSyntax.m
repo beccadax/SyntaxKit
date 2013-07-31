@@ -51,14 +51,17 @@
 }
 
 - (void)colorRange:(NSRange)range ofTextStorage:(NSTextStorage *)textStorage defaultAttributes:(NSDictionary*)defaultTextAttributes {
+    if(self.coloring)	 {
+        // Prevent endless loop when recoloring's replacement of text causes processEditing to fire again.
+        return;
+    }
+    
     self.defaultTextAttributes = defaultTextAttributes;
     
     [self.delegate syntaxWillColor:self];
     
 	@try
 	{
-        if(self.coloring)	// Prevent endless loop when recoloring's replacement of text causes processEditing to fire again.
-            return;
         
 		self.coloring = YES;
         

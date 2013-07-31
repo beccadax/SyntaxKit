@@ -77,8 +77,8 @@
                 if( !vColor ) {
                     // XXX this loop is a temporary hack
                     for(ASKSyntaxComponent * vCurrComponent in syntax.components) {
-                        if([vCurrComponent.definition[@"Name"] isEqualToString:mode]) {
-                            vColor = [vCurrComponent.definition[@"Color"] colorValue];
+                        if([vCurrComponent.name isEqualToString:mode]) {
+                            vColor = vCurrComponent.color;
                         }
                     }
                 }

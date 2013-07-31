@@ -46,9 +46,7 @@ NSString * const ASKSyntaxModeAttributeName = @"ASKSyntaxMode";
     
     // Load colors and fonts to use from preferences:
     // Load our dictionary which contains info on coloring this language:
-    NSDictionary*				vSyntaxDefinition = syntax.definition;
-    
-    for(NSDictionary *vCurrComponent in vSyntaxDefinition[@"Components"])
+    for(NSDictionary *vCurrComponent in syntax.components)
     {
         NSString*   vComponentType = vCurrComponent[@"Type"];
         NSString*   vComponentName = vCurrComponent[@"Name"];

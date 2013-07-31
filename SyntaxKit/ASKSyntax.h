@@ -13,6 +13,8 @@
 - (id)initWithDefinition:(NSDictionary*)definition;
 - (id)initWithDefinitionURL:(NSURL*)URL;
 
-@property (strong) NSDictionary * definition;
+@property (readonly) NSArray * components;
+@property (readonly) NSString * oneLineCommentPrefix;
+@property (readonly) NSArray * fileNameSuffixes;
 
 @end

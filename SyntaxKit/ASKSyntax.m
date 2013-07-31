@@ -8,6 +8,12 @@
 
 #import "ASKSyntax.h"
 
+@interface ASKSyntax ()
+
+@property (strong) NSDictionary * definition;
+
+@end
+
 
 @implementation ASKSyntax
 
@@ -20,6 +26,18 @@
 
 - (id)initWithDefinitionURL:(NSURL *)URL {
     return [self initWithDefinition:[NSDictionary dictionaryWithContentsOfURL:URL]];
+}
+
+- (NSArray *)components {
+    return self.definition[@"Components"];
+}
+
+- (NSString *)oneLineCommentPrefix {
+    return self.definition[@"OneLineCommentSuffix"];
+}
+
+- (NSArray *)fileNameSuffixes {
+    return self.definition[@"FileNameSuffixes"];
 }
 
 @end

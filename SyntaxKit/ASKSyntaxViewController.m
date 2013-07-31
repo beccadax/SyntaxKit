@@ -710,7 +710,7 @@ static void * const KVO = (void*)&KVO;
 	
 	NSRange nuSelRange = selRange;
 	
-	NSString*	commentPrefix = self.syntax.definition[@"OneLineCommentPrefix"];
+	NSString*	commentPrefix = self.syntax.oneLineCommentPrefix;
 	if( !commentPrefix || [commentPrefix length] == 0 )
 		commentPrefix = @"# ";
 	NSUInteger	commentPrefixLength = [commentPrefix length];

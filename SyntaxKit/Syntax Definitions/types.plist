@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>public.objective-c-source</key>
+	<string>Objective C</string>
+	<key>public.c-source</key>
+	<string>Objective C</string>
+	<key>public.c-plus-plus-source</key>
+	<string>Objective C</string>
+	<key>public.objective-c-plus-​plus-source</key>
+	<string>Objective C</string>
+	<key>public.c-header</key>
+	<string>Objective C</string>
+	<key>public.c-plus-plus-header</key>
+	<string>Objective C</string>
+	<key>public.html</key>
+	<string>HTML</string>
+	<key>public.xml</key>
+	<string>HTML</string>
+	<key>org.w3.cascading-style-sheet</key>
+	<string>CSS 1</string>
+</dict>
+</plist>

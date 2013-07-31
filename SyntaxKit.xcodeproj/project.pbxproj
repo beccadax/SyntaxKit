@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		8421688C17A8FD00007FAEAB /* ASKSyntaxMarker.h in Headers */ = {isa = PBXBuildFile; fileRef = 8421688A17A8FD00007FAEAB /* ASKSyntaxMarker.h */; };
+		8421688D17A8FD00007FAEAB /* ASKSyntaxMarker.m in Sources */ = {isa = PBXBuildFile; fileRef = 8421688B17A8FD00007FAEAB /* ASKSyntaxMarker.m */; };
 		842931BA17A0F0FD00A55E7C /* NSTextView+SyntaxKit.h in Headers */ = {isa = PBXBuildFile; fileRef = 842931B817A0F0FD00A55E7C /* NSTextView+SyntaxKit.h */; };
 		842931BB17A0F0FD00A55E7C /* NSTextView+SyntaxKit.m in Sources */ = {isa = PBXBuildFile; fileRef = 842931B917A0F0FD00A55E7C /* NSTextView+SyntaxKit.m */; };
 		842931BE17A1446E00A55E7C /* ASKSyntax.h in Headers */ = {isa = PBXBuildFile; fileRef = 842931BC17A1446E00A55E7C /* ASKSyntax.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -53,6 +55,8 @@
 
 /* Begin PBXFileReference section */
 		8421688817A8D798007FAEAB /* README.md */ = {isa = PBXFileReference; lastKnownFileType = text; path = README.md; sourceTree = "<group>"; };
+		8421688A17A8FD00007FAEAB /* ASKSyntaxMarker.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ASKSyntaxMarker.h; sourceTree = "<group>"; };
+		8421688B17A8FD00007FAEAB /* ASKSyntaxMarker.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ASKSyntaxMarker.m; sourceTree = "<group>"; };
 		842931B817A0F0FD00A55E7C /* NSTextView+SyntaxKit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSTextView+SyntaxKit.h"; sourceTree = "<group>"; };
 		842931B917A0F0FD00A55E7C /* NSTextView+SyntaxKit.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSTextView+SyntaxKit.m"; sourceTree = "<group>"; };
 		842931BC17A1446E00A55E7C /* ASKSyntax.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ASKSyntax.h; sourceTree = "<group>"; };
@@ -184,6 +188,8 @@
 				848113CE17A0C69E008C5A6F /* ASKLineNumberView.m */,
 				848113CB17A0C69E008C5A6F /* ASKLineNumberMarker.h */,
 				848113CC17A0C69E008C5A6F /* ASKLineNumberMarker.m */,
+				8421688A17A8FD00007FAEAB /* ASKSyntaxMarker.h */,
+				8421688B17A8FD00007FAEAB /* ASKSyntaxMarker.m */,
 				842931BC17A1446E00A55E7C /* ASKSyntax.h */,
 				842931BD17A1446E00A55E7C /* ASKSyntax.m */,
 				846E1EC217A25884002694CF /* ASKSyntax+syntaxForType.h */,
@@ -243,6 +249,7 @@
 				848113DC17A0C944008C5A6F /* SyntaxKit.h in Headers */,
 				848113D117A0C69E008C5A6F /* ASKLineNumberView.h in Headers */,
 				842931BA17A0F0FD00A55E7C /* NSTextView+SyntaxKit.h in Headers */,
+				8421688C17A8FD00007FAEAB /* ASKSyntaxMarker.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -355,6 +362,7 @@
 				8481139817A0C5FE008C5A6F /* SyntaxKit.m in Sources */,
 				848113C017A0C62B008C5A6F /* ASKSyntaxViewController.m in Sources */,
 				846E1EC517A25884002694CF /* ASKSyntax+syntaxForType.m in Sources */,
+				8421688D17A8FD00007FAEAB /* ASKSyntaxMarker.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -38,6 +38,7 @@
 #import <objc/runtime.h>
 #import "ASKLineNumberView.h"
 #import "ASKSyntax.h"
+#import "ASKSyntaxMarker.h"
 
 // -----------------------------------------------------------------------------
 //	Globals:
@@ -239,7 +240,7 @@ static void * const KVO = (void*)&KVO;
 		NSString*		rangeMode;
 		
 		
-		rangeMode = [textStorage attribute: TD_SYNTAX_COLORING_MODE_ATTR
+		rangeMode = [textStorage attribute: ASKSyntaxModeAttributeName
 								atIndex: currRange.location
 								effectiveRange: &effectiveRange];
 		

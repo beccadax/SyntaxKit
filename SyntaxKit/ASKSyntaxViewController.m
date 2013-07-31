@@ -39,6 +39,7 @@
 #import "ASKLineNumberView.h"
 #import "ASKSyntax.h"
 #import "ASKSyntaxMarker.h"
+#import "ASKSyntaxColorist.h"
 
 // -----------------------------------------------------------------------------
 //	Globals:
@@ -46,11 +47,13 @@
 
 static BOOL			sSyntaxColoredTextDocPrefsInited = NO;
 
-@interface ASKSyntaxViewController () <ASKSyntaxDelegate>
+@interface ASKSyntaxViewController () <ASKSyntaxColoristDelegate>
 
 +(void) 	makeSurePrefsAreInited;		// No need to call this.
 
 -(void) recolorRange: (NSRange) range;
+
+@property (strong) ASKSyntaxColorist * syntaxColorist;
 
 @end
 
@@ -65,9 +68,7 @@ static BOOL			sSyntaxColoredTextDocPrefsInited = NO;
 }
 
 - (void)setSyntax:(ASKSyntax *)syntax {
-    self.syntax.delegate = nil;
     _syntax = syntax;
-    self.syntax.delegate = self;
     
     [self recolorCompleteFile:nil];
 }
@@ -101,6 +102,9 @@ static BOOL			sSyntaxColoredTextDocPrefsInited = NO;
 // -----------------------------------------------------------------------------
 
 - (void)prep {
+    _syntaxColorist = [ASKSyntaxColorist new];
+    _syntaxColorist.delegate = self;
+    
     _maintainIndentation = YES;
     _wrapsLines = NO;
     _tabDepth = 4;
@@ -826,7 +830,7 @@ static void * const KVO = (void*)&KVO;
 		return;
     
     if(self.syntax) {
-        [self.syntax colorRange:range ofTextStorage:self.view.textStorage defaultAttributes:self.defaultTextAttributes];
+        [self.syntaxColorist colorRange:range ofTextStorage:self.view.textStorage withSyntax:self.syntax defaultAttributes:self.defaultTextAttributes];
     }
     else {
         [self.view.textStorage setAttributes:self.defaultTextAttributes range:range];
@@ -835,25 +839,25 @@ static void * const KVO = (void*)&KVO;
     [self textViewDidChangeSelection:[NSNotification notificationWithName:nil object:self.view]];
 }
 
-- (void)syntaxWillColor:(ASKSyntax *)syntax {
+- (void)syntaxColoristWillColor:(ASKSyntaxColorist *)syntaxColorist {
     if([self.delegate respondsToSelector:@selector(syntaxViewController:syntaxWillColor:)]) {
-        [self.delegate syntaxViewController:self syntaxWillColor:syntax];
+        [self.delegate syntaxViewController:self syntaxWillColor:self.syntax];
     }
 }
 
-- (void)syntaxIsColoring:(ASKSyntax *)syntax {
+- (void)syntaxColoristIsColoring:(ASKSyntaxColorist *)syntaxColorist {
     if([self.delegate respondsToSelector:@selector(syntaxViewController:syntaxIsColoring:)]) {
-        [self.delegate syntaxViewController:self syntaxIsColoring:syntax];
+        [self.delegate syntaxViewController:self syntaxIsColoring:self.syntax];
     }
 }
 
-- (void)syntaxDidColor:(ASKSyntax *)syntax {
+- (void)syntaxColoristDidColor:(ASKSyntaxColorist *)syntaxColorist {
     if([self.delegate respondsToSelector:@selector(syntaxViewController:syntaxDidColor:)]) {
-        [self.delegate syntaxViewController:self syntaxDidColor:syntax];
+        [self.delegate syntaxViewController:self syntaxDidColor:self.syntax];
     }
 }
 
-- (NSArray *)syntax:(ASKSyntax *)syntax userIdentifiersForKeywordComponentName:(NSString *)inModeName {
+- (NSArray *)syntaxColorist:(ASKSyntaxColorist *)syntaxColorist userIdentifiersForKeywordComponentName:(NSString *)inModeName {
     if([inModeName isEqualToString:@"UserIdentifiers"]) {
         return self.userIdentifiers;
     }
@@ -863,9 +867,9 @@ static void * const KVO = (void*)&KVO;
     return nil;
 }
 
-- (NSDictionary *)syntax:(ASKSyntax *)syntax textAttributesForComponentName:(NSString *)name color:(NSColor *)color {
+- (NSDictionary *)syntaxColorist:(ASKSyntaxColorist *)syntaxColorist textAttributesForComponentName:(NSString *)name color:(NSColor *)color {
     if([self.delegate respondsToSelector:@selector(syntaxViewController:syntax:textAttributesForComponentName:color:)]) {
-        return [self.delegate syntaxViewController:self syntax:syntax textAttributesForComponentName:name color:color];
+        return [self.delegate syntaxViewController:self syntax:self.syntax textAttributesForComponentName:name color:color];
     }
     else {
         return nil;
@@ -1004,7 +1008,7 @@ static void * const KVO = (void*)&KVO;
     if(!sig) {
         struct objc_method_description method = protocol_getMethodDescription(@protocol(NSTextViewDelegate), aSelector, NO, YES);
         if(!method.name) {
-            method = protocol_getMethodDescription(@protocol(ASKSyntaxDelegate), aSelector, NO, YES);
+            method = protocol_getMethodDescription(@protocol(ASKSyntaxColoristDelegate), aSelector, NO, YES);
         }
         
         if(method.name && [self.delegate respondsToSelector:aSelector]) {

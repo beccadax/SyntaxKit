@@ -27,15 +27,6 @@
 //
 
 #import "ASKSyntax.h"
-#import "ASKSyntaxMarker.h"
-#import "NSArray+Color.h"
-
-@interface ASKSyntax () <ASKSyntaxMarkerDelegate>
-
-@property (strong) NSDictionary * defaultTextAttributes;
-@property (strong) ASKSyntaxMarker * syntaxMarker;
-
-@end
 
 
 @implementation ASKSyntax
@@ -43,99 +34,12 @@
 - (id)initWithDefinition:(NSDictionary *)definition {
     if((self = [super init])) {
         _definition = definition;
-        _syntaxMarker = [ASKSyntaxMarker new];
-        _syntaxMarker.delegate = self;
     }
     return self;
 }
 
 - (id)initWithDefinitionURL:(NSURL *)URL {
     return [self initWithDefinition:[NSDictionary dictionaryWithContentsOfURL:URL]];
-}
-
-- (void)colorRange:(NSRange)range ofTextStorage:(NSTextStorage *)textStorage defaultAttributes:(NSDictionary*)defaultTextAttributes {
-    if(self.coloring)	 {
-        // Prevent endless loop when recoloring's replacement of text causes processEditing to fire again.
-        return;
-    }
-    
-    self.defaultTextAttributes = defaultTextAttributes;
-    
-    [self.delegate syntaxWillColor:self];
-        
-	@try
-	{        
-		self.coloring = YES;
-        
-		[self.syntaxMarker markRange:range ofAttributedString:textStorage withSyntax:self];
-        
-        NSUserDefaults * vPrefs = [NSUserDefaults standardUserDefaults];
-        
-        [textStorage enumerateAttribute:ASKSyntaxModeAttributeName inRange:range options:0 usingBlock:^(NSString * mode, NSRange range, BOOL *stop) {
-            NSDictionary * attributes = [self defaultTextAttributes];
-            
-            if(mode) {
-                NSString*   vColorKeyName = [@"SyntaxColoring:Color:" stringByAppendingString: mode];
-                NSColor*	vColor = [[vPrefs arrayForKey: vColorKeyName] colorValue];
-
-                if( !vColor ) {
-                    // XXX this loop is a temporary hack
-                    for(NSDictionary * vCurrComponent in self.definition[@"Components"]) {
-                        if([vCurrComponent[@"Name"] isEqualToString:mode]) {
-                            vColor = [vCurrComponent[@"Color"] colorValue];
-                        }
-                    }
-                }
-                
-                attributes = [self textAttributesForComponentName:mode color:vColor];
-            }
-                
-            [textStorage setAttributes:attributes range:range];
-            [self.delegate syntaxIsColoring:self];
-        }];
-		
-		[textStorage fixFontAttributeInRange: range];	// Make sure Japanese etc. fallback fonts get applied.
-	}
-	@finally
-	{
-		self.coloring = NO;
-        
-        [self.delegate syntaxDidColor:self];
-	}
-}
-
-
-// -----------------------------------------------------------------------------
-//	textAttributesForComponentName:color:
-//		Return the styles to use for the given mode/color. This calls upon the
-//		delegate to provide the styles, or if not, just set the color. This is
-//		also responsible for setting the TD_SYNTAX_COLORING_MODE_ATTR attribute
-//		so we can extend a range for partial recoloring to color the full block
-//		comment or whatever which is being changed (in case the user types a
-//		sequence that would end that block comment or similar).
-// -----------------------------------------------------------------------------
-
--(NSDictionary*)	textAttributesForComponentName: (NSString*)attr color: (NSColor*)col
-{
-	NSDictionary*		vLocalStyles = [self.delegate syntax:self textAttributesForComponentName: attr color: col];
-	NSMutableDictionary*vStyles = [[self defaultTextAttributes] mutableCopy];
-	if( vLocalStyles )
-		[vStyles addEntriesFromDictionary: vLocalStyles];
-	else
-		vStyles[NSForegroundColorAttributeName] = col;
-	
-	// Make sure partial recoloring works:
-	vStyles[ASKSyntaxModeAttributeName] = attr;
-	
-	return vStyles;
-}
-
-- (void)syntaxMarkerIsMarking:(ASKSyntaxMarker *)marker {
-    [self.delegate syntaxIsColoring:self];
-}
-
-- (NSArray *)syntaxMarker:(ASKSyntaxMarker *)marker userIdentifiersForKeywordMode:(NSString *)name {
-    return [self.delegate syntax:self userIdentifiersForKeywordComponentName:name];
 }
 
 @end

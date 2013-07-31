@@ -28,29 +28,11 @@
 
 #import <Foundation/Foundation.h>
 
-@protocol ASKSyntaxDelegate;
-
 @interface ASKSyntax : NSObject
 
 - (id)initWithDefinition:(NSDictionary*)definition;
 - (id)initWithDefinitionURL:(NSURL*)URL;
 
 @property (strong) NSDictionary * definition;
-@property (weak) id <ASKSyntaxDelegate> delegate;
-
-@property (assign,getter = isColoring) BOOL coloring;
-
-- (void)colorRange:(NSRange)range ofTextStorage:(NSTextStorage *)textStorage defaultAttributes:(NSDictionary*)defaultTextAttributes;
-
-@end
-
-@protocol ASKSyntaxDelegate <NSObject>
-
-- (void)syntaxWillColor:(ASKSyntax*)syntax;
-- (void)syntaxIsColoring:(ASKSyntax*)syntax;
-- (void)syntaxDidColor:(ASKSyntax*)syntax;
-
-- (NSArray*)syntax:(ASKSyntax*)syntax userIdentifiersForKeywordComponentName:(NSString*)inModeName;
-- (NSDictionary*)syntax:(ASKSyntax*)syntax textAttributesForComponentName:(NSString*)name color:(NSColor*)color;
 
 @end

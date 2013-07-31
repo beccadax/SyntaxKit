@@ -89,51 +89,52 @@ NSString * const ASKSyntaxModeAttributeName = @"ASKSyntaxMode";
 -(void)	markStringsFrom: (NSString*) startCh to: (NSString*) endCh inString: (NSMutableAttributedString*) s
                withMode:(NSString*)attr andEscapeChar: (NSString*)vStringEscapeCharacter
 {
-	NS_DURING
-    NSScanner*			vScanner = [NSScanner scannerWithString: [s string]];
-    NSDictionary*		vStyles = [self textAttributesForComponentName: attr];
-    BOOL				vIsEndChar = NO;
-    unichar				vEscChar = '\\';
-    
-    if( vStringEscapeCharacter )
-    {
-        if( [vStringEscapeCharacter length] != 0 )
-            vEscChar = [vStringEscapeCharacter characterAtIndex: 0];
-    }
-    
-    while( ![vScanner isAtEnd] )
-    {
-        NSUInteger		vStartOffs,
-        vEndOffs;
-        vIsEndChar = NO;
+	@try {
+        NSScanner*			vScanner = [NSScanner scannerWithString: [s string]];
+        NSDictionary*		vStyles = [self textAttributesForComponentName: attr];
+        BOOL				vIsEndChar = NO;
+        unichar				vEscChar = '\\';
         
-        [self.delegate syntaxMarkerIsMarking:self];
-        
-        // Look for start of string:
-        [vScanner scanUpToString: startCh intoString: nil];
-        vStartOffs = [vScanner scanLocation];
-        if( ![vScanner scanString:startCh intoString:nil] )
-            NS_VOIDRETURN;
-        
-        while( !vIsEndChar && ![vScanner isAtEnd] )	// Loop until we find end-of-string marker or our text to color is finished:
+        if( vStringEscapeCharacter )
         {
-            [vScanner scanUpToString: endCh intoString: nil];
-            if( ([vStringEscapeCharacter length] == 0) || [[s string] characterAtIndex: ([vScanner scanLocation] -1)] != vEscChar )	// Backslash before the end marker? That means ignore the end marker.
-                vIsEndChar = YES;	// A real one! Terminate loop.
-            if( ![vScanner scanString:endCh intoString:nil] )	// But skip this char before that.
-                return;
-            
-            [self.delegate syntaxMarkerIsMarking:self];
+            if( [vStringEscapeCharacter length] != 0 )
+                vEscChar = [vStringEscapeCharacter characterAtIndex: 0];
         }
         
-        vEndOffs = [vScanner scanLocation];
-        
-        // Now mess with the string's styles:
-        [s addAttributes: vStyles range: NSMakeRange( vStartOffs, vEndOffs -vStartOffs )];
+        while( ![vScanner isAtEnd] )
+        {
+            NSUInteger		vStartOffs,
+            vEndOffs;
+            vIsEndChar = NO;
+            
+            [self.delegate syntaxMarkerIsMarking:self];
+            
+            // Look for start of string:
+            [vScanner scanUpToString: startCh intoString: nil];
+            vStartOffs = [vScanner scanLocation];
+            if( ![vScanner scanString:startCh intoString:nil] )
+                return;
+            
+            while( !vIsEndChar && ![vScanner isAtEnd] )	// Loop until we find end-of-string marker or our text to color is finished:
+            {
+                [vScanner scanUpToString: endCh intoString: nil];
+                if( ([vStringEscapeCharacter length] == 0) || [[s string] characterAtIndex: ([vScanner scanLocation] -1)] != vEscChar )	// Backslash before the end marker? That means ignore the end marker.
+                    vIsEndChar = YES;	// A real one! Terminate loop.
+                if( ![vScanner scanString:endCh intoString:nil] )	// But skip this char before that.
+                    return;
+                
+                [self.delegate syntaxMarkerIsMarking:self];
+            }
+            
+            vEndOffs = [vScanner scanLocation];
+            
+            // Now mess with the string's styles:
+            [s addAttributes: vStyles range: NSMakeRange( vStartOffs, vEndOffs -vStartOffs )];
+        }
     }
-	NS_HANDLER
-    // Just ignore it, syntax coloring isn't that important.
-	NS_ENDHANDLER
+    @catch ( ... ) {
+        // Just ignore it, syntax coloring isn't that important.
+    }
 }
 
 

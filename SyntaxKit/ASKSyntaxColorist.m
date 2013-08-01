@@ -29,7 +29,6 @@
 #import "ASKSyntaxColorist.h"
 
 #import "ASKSyntax.h"
-#import "ASKSyntaxMarker.h"
 #import "ASKSyntaxColorPalette.h"
 
 @interface ASKSyntaxColorist ()
@@ -38,19 +37,8 @@
 
 @implementation ASKSyntaxColorist
 
-- (void)colorRange:(NSRange)range ofTextStorage:(NSTextStorage *)textStorage withSyntax:(ASKSyntax *)syntax defaultAttributes:(NSDictionary *)defaultTextAttributes {
-    if(self.coloring)	 {
-        // Prevent endless loop when recoloring's replacement of text causes processEditing to fire again.
-        return;
-    }
-    
-    [self.delegate syntaxColoristWillColor:self];
-    
+- (void)colorRange:(NSRange)range ofTextStorage:(NSTextStorage *)textStorage withDefaultAttributes:(NSDictionary *)defaultTextAttributes {
 	@try {
-		self.coloring = YES;
-        
-		[syntax.marker markRange:range ofAttributedString:textStorage withUserIdentifiers:self.userIdentifiers];
-        
         [textStorage enumerateAttribute:ASKSyntaxComponentAttributeName inRange:range options:0 usingBlock:^(ASKSyntaxComponent * component, NSRange range, BOOL *stop) {
             NSDictionary * attributes = defaultTextAttributes;
             
@@ -64,11 +52,8 @@
 		
 		[textStorage fixFontAttributeInRange: range];	// Make sure Japanese etc. fallback fonts get applied.
 	}
-	@finally
-	{
-		self.coloring = NO;
+	@catch( ... ) {
         
-        [self.delegate syntaxColoristDidColor:self];
 	}
 }
 

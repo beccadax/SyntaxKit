@@ -37,18 +37,12 @@
 
 @property (weak) id <ASKSyntaxColoristDelegate> delegate;
 @property (strong) ASKSyntaxColorPalette * colorPalette;
-@property (strong) NSArray * userIdentifiers;
 
-@property (assign,getter = isColoring) BOOL coloring;
-
-- (void)colorRange:(NSRange)range ofTextStorage:(NSTextStorage *)textStorage withSyntax:(ASKSyntax*)syntax defaultAttributes:(NSDictionary*)defaultTextAttributes;
+- (void)colorRange:(NSRange)range ofTextStorage:(NSTextStorage *)textStorage withDefaultAttributes:(NSDictionary*)defaultTextAttributes;
 
 @end
 
 @protocol ASKSyntaxColoristDelegate <NSObject>
-
-- (void)syntaxColoristWillColor:(ASKSyntaxColorist*)syntaxColorist;
-- (void)syntaxColoristDidColor:(ASKSyntaxColorist*)syntaxColorist;
 
 - (NSDictionary*)syntaxColorist:(ASKSyntaxColorist*)syntaxColorist textAttributesForSyntaxComponent:(ASKSyntaxComponent*)component color:(NSColor*)color;
 

@@ -49,6 +49,7 @@
 @interface ASKSyntaxViewController () <ASKSyntaxColoristDelegate>
 
 -(void) recolorRange: (NSRange) range;
+@property (assign) BOOL recoloring;
 
 @property (strong) ASKSyntaxColorist * syntaxColorist;
 
@@ -806,29 +807,32 @@ static void * const KVO = (void*)&KVO;
 	if(self.view == nil || range.length == 0 )	// Don't like doing useless stuff.
 		return;
     
+    if(self.recoloring) {
+        // Prevent endless loop when recoloring's changes cause processEditing to fire again.
+        return;
+    }
+    
     if(self.syntax) {
-        self.syntaxColorist.colorPalette = self.colorPalette;
-        self.syntaxColorist.userIdentifiers = self.userIdentifiers;
+        self.recoloring = YES;
+        if([self.delegate respondsToSelector:@selector(syntaxViewController:willColorRange:)]) {
+            [self.delegate syntaxViewController:self willColorRange:range];
+        }
         
-        [self.syntaxColorist colorRange:range ofTextStorage:self.view.textStorage withSyntax:self.syntax defaultAttributes:self.defaultTextAttributes];
+        [self.syntax.marker markRange:range ofAttributedString:self.view.textStorage withUserIdentifiers:self.userIdentifiers];
+        
+        self.syntaxColorist.colorPalette = self.colorPalette;
+        [self.syntaxColorist colorRange:range ofTextStorage:self.view.textStorage withDefaultAttributes:self.defaultTextAttributes];
+        
+        if([self.delegate respondsToSelector:@selector(syntaxViewController:didColorRange:)]) {
+            [self.delegate syntaxViewController:self didColorRange:range];
+        }
+        self.recoloring = NO;
     }
     else {
         [self.view.textStorage setAttributes:self.defaultTextAttributes range:range];
     }
 
     [self textViewDidChangeSelection:[NSNotification notificationWithName:nil object:self.view]];
-}
-
-- (void)syntaxColoristWillColor:(ASKSyntaxColorist *)syntaxColorist {
-    if([self.delegate respondsToSelector:@selector(syntaxViewController:syntaxWillColor:)]) {
-        [self.delegate syntaxViewController:self syntaxWillColor:self.syntax];
-    }
-}
-
-- (void)syntaxColoristDidColor:(ASKSyntaxColorist *)syntaxColorist {
-    if([self.delegate respondsToSelector:@selector(syntaxViewController:syntaxDidColor:)]) {
-        [self.delegate syntaxViewController:self syntaxDidColor:self.syntax];
-    }
 }
 
 - (NSDictionary *)syntaxColorist:(ASKSyntaxColorist *)syntaxColorist textAttributesForSyntaxComponent:(ASKSyntaxComponent *)component color:(NSColor *)color {

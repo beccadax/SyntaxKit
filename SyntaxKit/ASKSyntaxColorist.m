@@ -34,18 +34,9 @@
 
 @interface ASKSyntaxColorist ()
 
-@property (strong) ASKSyntaxMarker * syntaxMarker;
-
 @end
 
 @implementation ASKSyntaxColorist
-
-- (id)init {
-    if((self = [super init])) {
-        _syntaxMarker = [ASKSyntaxMarker new];
-    }
-    return self;
-}
 
 - (void)colorRange:(NSRange)range ofTextStorage:(NSTextStorage *)textStorage withSyntax:(ASKSyntax *)syntax defaultAttributes:(NSDictionary *)defaultTextAttributes {
     if(self.coloring)	 {
@@ -58,7 +49,7 @@
 	@try {
 		self.coloring = YES;
         
-		[self.syntaxMarker markRange:range ofAttributedString:textStorage withSyntax:syntax userIdentifiers:
+		[syntax.marker markRange:range ofAttributedString:textStorage withUserIdentifiers:
          [self.delegate syntaxColorist:self userIdentifiersForKeywordComponentName:@"UserIdentifiers"]];
         
         [textStorage enumerateAttribute:ASKSyntaxComponentAttributeName inRange:range options:0 usingBlock:^(ASKSyntaxComponent * component, NSRange range, BOOL *stop) {

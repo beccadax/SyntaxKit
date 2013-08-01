@@ -27,13 +27,10 @@
 //
 
 #import <Foundation/Foundation.h>
-
-extern NSString * const ASKSyntaxComponentAttributeName;
+#import "ASKSyntax.h"
 
 @class ASKSyntax;
 
-@interface ASKSyntaxMarker : NSObject
-
-- (void)markRange:(NSRange)range ofAttributedString:(NSMutableAttributedString*)string withSyntax:(ASKSyntax*)syntax userIdentifiers:(NSArray*)userIdentifiers;
+@interface ASKSyntaxMarker : NSObject <ASKSyntaxMarker>
 
 @end

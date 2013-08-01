@@ -7,13 +7,15 @@
 //
 
 #import "ASKSyntax.h"
+#import "ASKSyntaxMarker.h"
+
+NSString * const ASKSyntaxComponentAttributeName = @"ASKSyntaxMode";
 
 @interface ASKSyntax ()
 
 @property (strong) NSDictionary * definition;
 
 @end
-
 
 @implementation ASKSyntax
 
@@ -26,6 +28,9 @@
             [components addObject:[[ASKSyntaxComponent alloc] initWithDefinition:def]];
         }
         _components = components;
+        
+        self.marker = [ASKSyntaxMarker new];
+        self.marker.syntax = self;
     }
     return self;
 }

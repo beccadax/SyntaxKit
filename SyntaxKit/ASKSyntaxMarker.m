@@ -30,11 +30,11 @@
 #import "ASKSyntax.h"
 #import "ASKSyntaxComponent+Marking.h"
 
-NSString * const ASKSyntaxComponentAttributeName = @"ASKSyntaxMode";
-
 @implementation ASKSyntaxMarker
 
-- (void)markRange:(NSRange)range ofAttributedString:(NSMutableAttributedString *)string withSyntax:(ASKSyntax *)syntax userIdentifiers:(NSArray *)userIdentifiers {
+@synthesize syntax = _syntax;
+
+- (void)markRange:(NSRange)range ofAttributedString:(NSMutableAttributedString *)string withUserIdentifiers:(NSArray *)userIdentifiers {
     // Kludge fix for case where we sometimes exceed text length:ra
     NSInteger diff = string.length - (range.location + range.length);
     if(diff < 0) {
@@ -44,7 +44,7 @@ NSString * const ASKSyntaxComponentAttributeName = @"ASKSyntaxMode";
     // Get the text we'll be working with:
     NSMutableAttributedString * scratchString = [[NSMutableAttributedString alloc] initWithString:[string.string substringWithRange:range]];
     
-    for(ASKSyntaxComponent * component in syntax.components) {
+    for(ASKSyntaxComponent * component in self.syntax.components) {
         [component marker:self markInString:scratchString withUserIdentifiers:userIdentifiers];
     }
     

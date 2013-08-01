@@ -40,16 +40,13 @@
 #import "ASKSyntax.h"
 #import "ASKSyntaxMarker.h"
 #import "ASKSyntaxColorist.h"
+#import "ASKSyntaxColorPalette.h"
 
 // -----------------------------------------------------------------------------
 //	Globals:
 // -----------------------------------------------------------------------------
 
-static BOOL			sSyntaxColoredTextDocPrefsInited = NO;
-
 @interface ASKSyntaxViewController () <ASKSyntaxColoristDelegate>
-
-+(void) 	makeSurePrefsAreInited;		// No need to call this.
 
 -(void) recolorRange: (NSRange) range;
 
@@ -78,30 +75,14 @@ static BOOL			sSyntaxColoredTextDocPrefsInited = NO;
 }
 
 // -----------------------------------------------------------------------------
-//	makeSurePrefsAreInited
-//		Called by each view on creation to make sure we load the default colors
-//		and user-defined identifiers from SyntaxColorDefaults.plist.
-// -----------------------------------------------------------------------------
-
-+(void) makeSurePrefsAreInited
-{
-	if( !sSyntaxColoredTextDocPrefsInited )
-	{
-		NSUserDefaults*	prefs = [NSUserDefaults standardUserDefaults];
-        [prefs registerDefaults:[NSDictionary dictionaryWithContentsOfURL:[[NSBundle bundleForClass:self] URLForResource:@"SyntaxColorDefaults" withExtension:@"plist"]]];
-
-		sSyntaxColoredTextDocPrefsInited = YES;
-	}
-}
-
-
-// -----------------------------------------------------------------------------
 //	initWithNibName:bundle:
 //		Constructor that inits sourceCode member variable as a flag. It's
 //		storage for the text until the NIB's been loaded.
 // -----------------------------------------------------------------------------
 
 - (void)prep {
+    _colorPalette = ASKSyntaxColorPalette.standardColorPalette;
+    
     _syntaxColorist = [ASKSyntaxColorist new];
     _syntaxColorist.delegate = self;
     
@@ -138,11 +119,7 @@ static BOOL			sSyntaxColoredTextDocPrefsInited = NO;
 }
 
 
--(void)	setUpSyntaxColoring
-{
-	// Set up some sensible defaults for syntax coloring:
-	[[self class] makeSurePrefsAreInited];
-        
+-(void)	setUpSyntaxColoring {
     self.view.layoutManager.typesetter = [ASKTypesetter new];
 	
 	// Register for "text changed" notifications of our text storage:
@@ -830,6 +807,7 @@ static void * const KVO = (void*)&KVO;
 		return;
     
     if(self.syntax) {
+        self.syntaxColorist.colorPalette = self.colorPalette;
         [self.syntaxColorist colorRange:range ofTextStorage:self.view.textStorage withSyntax:self.syntax defaultAttributes:self.defaultTextAttributes];
     }
     else {

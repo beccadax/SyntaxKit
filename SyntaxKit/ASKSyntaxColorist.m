@@ -30,7 +30,7 @@
 
 #import "ASKSyntax.h"
 #import "ASKSyntaxMarker.h"
-#import "NSArray+Color.h"
+#import "ASKSyntaxColorPalette.h"
 
 @interface ASKSyntaxColorist () <ASKSyntaxMarkerDelegate>
 
@@ -65,16 +65,12 @@
         
 		[self.syntaxMarker markRange:range ofAttributedString:textStorage withSyntax:syntax];
         
-        NSUserDefaults * vPrefs = [NSUserDefaults standardUserDefaults];
-        
         [textStorage enumerateAttribute:ASKSyntaxComponentAttributeName inRange:range options:0 usingBlock:^(ASKSyntaxComponent * component, NSRange range, BOOL *stop) {
             NSDictionary * attributes = [self defaultTextAttributes];
             
             if(component) {
-                NSString*   vColorKeyName = [@"SyntaxColoring:Color:" stringByAppendingString: component.name];
-                NSColor*	vColor = [[vPrefs arrayForKey: vColorKeyName] colorValue] ?: component.color;
-                
-                attributes = [self textAttributesForComponent:component color:vColor];
+                NSColor * color = [self.colorPalette colorForSyntaxComponent:component];
+                attributes = [self textAttributesForComponent:component color:color];
             }
             
             [textStorage setAttributes:attributes range:range];

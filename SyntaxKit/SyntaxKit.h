@@ -13,5 +13,7 @@
 #import "ASKSyntaxComponent.h"
 
 #import "ASKSyntaxViewController.h"
+#import "ASKSyntaxColorPalette.h"
+
 #import "ASKLineNumberView.h"
 #import "ASKLineNumberMarker.h"

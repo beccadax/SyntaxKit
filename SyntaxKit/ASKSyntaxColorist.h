@@ -31,10 +31,12 @@
 @class ASKSyntax;
 @class ASKSyntaxComponent;
 @protocol ASKSyntaxColoristDelegate;
+@class ASKSyntaxColorPalette;
 
 @interface ASKSyntaxColorist : NSObject
 
 @property (weak) id <ASKSyntaxColoristDelegate> delegate;
+@property (strong) ASKSyntaxColorPalette * colorPalette;
 
 @property (assign,getter = isColoring) BOOL coloring;
 

@@ -35,6 +35,7 @@
 @class ASKLineNumberView;
 @class ASKSyntax;
 @class ASKSyntaxComponent;
+@class ASKSyntaxColorPalette;
 
 @protocol ASKSyntaxViewControllerDelegate;
 
@@ -49,6 +50,7 @@
 
 @property (strong, nonatomic) ASKSyntax * syntax;
 @property (copy, nonatomic) NSArray * userIdentifiers;
+@property (strong, nonatomic) ASKSyntaxColorPalette * colorPalette;
 
 @property (assign) BOOL maintainIndentation;
 -(IBAction)	toggleMaintainIndentation: (id)sender;

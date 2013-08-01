@@ -26,5 +26,31 @@
 	<string>Copyright © 2013 Architechies. All rights reserved.</string>
 	<key>NSPrincipalClass</key>
 	<string></string>
+	<key>UTExportedTypeDeclarations</key>
+	<array>
+		<dict>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.plain-text</string>
+				<string>com.apple.dashcode.css</string>
+				<string>com.panic.coda.css</string>
+			</array>
+			<key>UTTypeDescription</key>
+			<string>CSS Document</string>
+			<key>UTTypeIdentifier</key>
+			<string>org.w3.cascading-style-sheet</string>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>css</string>
+				</array>
+				<key>public.mime-type</key>
+				<array>
+					<string>text/css</string>
+				</array>
+			</dict>
+		</dict>
+	</array>
 </dict>
 </plist>

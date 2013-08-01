@@ -34,6 +34,8 @@
 
 @class ASKLineNumberView;
 @class ASKSyntax;
+@class ASKSyntaxComponent;
+@class ASKSyntaxColorPalette;
 
 @protocol ASKSyntaxViewControllerDelegate;
 
@@ -48,6 +50,7 @@
 
 @property (strong, nonatomic) ASKSyntax * syntax;
 @property (copy, nonatomic) NSArray * userIdentifiers;
+@property (strong, nonatomic) ASKSyntaxColorPalette * colorPalette;
 
 @property (assign) BOOL maintainIndentation;
 -(IBAction)	toggleMaintainIndentation: (id)sender;
@@ -84,10 +87,9 @@
 
 @optional
 
-- (void)syntaxViewController:(ASKSyntaxViewController*)controller syntaxWillColor:(ASKSyntax*)syntax;
-- (void)syntaxViewController:(ASKSyntaxViewController*)controller syntaxIsColoring:(ASKSyntax*)syntax;
-- (void)syntaxViewController:(ASKSyntaxViewController*)controller syntaxDidColor:(ASKSyntax*)syntax;
+- (void)syntaxViewController:(ASKSyntaxViewController*)controller willColorRange:(NSRange)range;
+- (void)syntaxViewController:(ASKSyntaxViewController*)controller didColorRange:(NSRange)range;
 
-- (NSDictionary*)syntaxViewController:(ASKSyntaxViewController*)controller syntax:(ASKSyntax*)syntax textAttributesForComponentName:(NSString*)name color:(NSColor*)color;
+- (NSDictionary*)syntaxViewController:(ASKSyntaxViewController*)controller syntax:(ASKSyntax*)syntax textAttributesForSyntaxComponent:(ASKSyntaxComponent*)component color:(NSColor*)color;
 
 @end

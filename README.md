@@ -9,6 +9,8 @@ SyntaxKit is a Cocoa framework with the following features:
 
 The syntax highlighting and code editing features are based on [UKSyntaxColoredTextViewController][uksyntax], and the line numbering is based on [NoodleLineNumberView][noodleline]. However, both of these have been extensively modified, and are no longer fully compatible with the original versions.
 
+SyntaxKit was originally written for [Ingist][ingist], a gist creation tool. If you like SyntaxKit, please check out Ingist—you might find it handy.
+
 Usage
 ----
 
@@ -35,9 +37,10 @@ The current version of SyntaxKit is basically functional, and is used in [Ingist
 * There are some rendering glitches in ASKLineNumberView, usually brought out by scrolling.
 * -[ASKSyntaxViewController indentSelection:] and -[ASKSyntaxViewController unindentSelection:] do not fully support ASKSyntaxViewController's indentation-controlling properties.
 * ASKSyntax(syntaxForType) does not have any mechanism for loading syntaxes shipped in an app or in a user directory, and the mapping between UTIs and syntaxes is kind of hacky.
-* ASKSyntax should probably be refactored into components for labeling syntax and for coloring based on those labels. It may make sense to turn the syntax defintion into a set of objects, too.
-* I might rework the syntax coloring to base it on regexes.
+* I might rework the syntax marking to base it on regexes.
 * SyntaxKit desperately needs more syntaxes. Currently it only supports HTML, CSS, and Objective-C; it uses the Objective-C syntax highlighting for other C variants.
+* While the ASKSyntaxColorPalette object now encapsulates mapping syntax components to colors, there's currently no mechanism to handle editing color palettes.
+* Documentation is generally either nonexistent or out of date.
 
 Although this version is labeled as 1.0, I don't expect the API to remain especially stable, particularly around ASKSyntax. Be careful.
 

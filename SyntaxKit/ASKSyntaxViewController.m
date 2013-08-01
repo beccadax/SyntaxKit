@@ -38,18 +38,20 @@
 #import <objc/runtime.h>
 #import "ASKLineNumberView.h"
 #import "ASKSyntax.h"
+#import "ASKSyntaxMarker.h"
+#import "ASKSyntaxColorist.h"
+#import "ASKSyntaxColorPalette.h"
 
 // -----------------------------------------------------------------------------
 //	Globals:
 // -----------------------------------------------------------------------------
 
-static BOOL			sSyntaxColoredTextDocPrefsInited = NO;
-
-@interface ASKSyntaxViewController () <ASKSyntaxDelegate>
-
-+(void) 	makeSurePrefsAreInited;		// No need to call this.
+@interface ASKSyntaxViewController () <ASKSyntaxColoristDelegate>
 
 -(void) recolorRange: (NSRange) range;
+@property (assign) BOOL recoloring;
+
+@property (strong) ASKSyntaxColorist * syntaxColorist;
 
 @end
 
@@ -64,9 +66,7 @@ static BOOL			sSyntaxColoredTextDocPrefsInited = NO;
 }
 
 - (void)setSyntax:(ASKSyntax *)syntax {
-    self.syntax.delegate = nil;
     _syntax = syntax;
-    self.syntax.delegate = self;
     
     [self recolorCompleteFile:nil];
 }
@@ -76,30 +76,17 @@ static BOOL			sSyntaxColoredTextDocPrefsInited = NO;
 }
 
 // -----------------------------------------------------------------------------
-//	makeSurePrefsAreInited
-//		Called by each view on creation to make sure we load the default colors
-//		and user-defined identifiers from SyntaxColorDefaults.plist.
-// -----------------------------------------------------------------------------
-
-+(void) makeSurePrefsAreInited
-{
-	if( !sSyntaxColoredTextDocPrefsInited )
-	{
-		NSUserDefaults*	prefs = [NSUserDefaults standardUserDefaults];
-        [prefs registerDefaults:[NSDictionary dictionaryWithContentsOfURL:[[NSBundle bundleForClass:self] URLForResource:@"SyntaxColorDefaults" withExtension:@"plist"]]];
-
-		sSyntaxColoredTextDocPrefsInited = YES;
-	}
-}
-
-
-// -----------------------------------------------------------------------------
 //	initWithNibName:bundle:
 //		Constructor that inits sourceCode member variable as a flag. It's
 //		storage for the text until the NIB's been loaded.
 // -----------------------------------------------------------------------------
 
 - (void)prep {
+    _colorPalette = ASKSyntaxColorPalette.standardColorPalette;
+    
+    _syntaxColorist = [ASKSyntaxColorist new];
+    _syntaxColorist.delegate = self;
+    
     _maintainIndentation = YES;
     _wrapsLines = NO;
     _tabDepth = 4;
@@ -133,11 +120,7 @@ static BOOL			sSyntaxColoredTextDocPrefsInited = NO;
 }
 
 
--(void)	setUpSyntaxColoring
-{
-	// Set up some sensible defaults for syntax coloring:
-	[[self class] makeSurePrefsAreInited];
-        
+-(void)	setUpSyntaxColoring {
     self.view.layoutManager.typesetter = [ASKTypesetter new];
 	
 	// Register for "text changed" notifications of our text storage:
@@ -236,10 +219,10 @@ static void * const KVO = (void*)&KVO;
 	if( range.length > 0 )
 	{
 		NSRange			effectiveRange;
-		NSString*		rangeMode;
+		ASKSyntaxComponent *		rangeMode;
 		
 		
-		rangeMode = [textStorage attribute: TD_SYNTAX_COLORING_MODE_ATTR
+		rangeMode = [textStorage attribute: ASKSyntaxComponentAttributeName
 								atIndex: currRange.location
 								effectiveRange: &effectiveRange];
 		
@@ -705,7 +688,7 @@ static void * const KVO = (void*)&KVO;
 	
 	NSRange nuSelRange = selRange;
 	
-	NSString*	commentPrefix = self.syntax.definition[@"OneLineCommentPrefix"];
+	NSString*	commentPrefix = self.syntax.oneLineCommentPrefix;
 	if( !commentPrefix || [commentPrefix length] == 0 )
 		commentPrefix = @"# ";
 	NSUInteger	commentPrefixLength = [commentPrefix length];
@@ -824,8 +807,26 @@ static void * const KVO = (void*)&KVO;
 	if(self.view == nil || range.length == 0 )	// Don't like doing useless stuff.
 		return;
     
+    if(self.recoloring) {
+        // Prevent endless loop when recoloring's changes cause processEditing to fire again.
+        return;
+    }
+    
     if(self.syntax) {
-        [self.syntax colorRange:range ofTextStorage:self.view.textStorage defaultAttributes:self.defaultTextAttributes];
+        self.recoloring = YES;
+        if([self.delegate respondsToSelector:@selector(syntaxViewController:willColorRange:)]) {
+            [self.delegate syntaxViewController:self willColorRange:range];
+        }
+        
+        [self.syntax.marker markRange:range ofAttributedString:self.view.textStorage withUserIdentifiers:self.userIdentifiers];
+        
+        self.syntaxColorist.colorPalette = self.colorPalette;
+        [self.syntaxColorist colorRange:range ofTextStorage:self.view.textStorage withDefaultAttributes:self.defaultTextAttributes];
+        
+        if([self.delegate respondsToSelector:@selector(syntaxViewController:didColorRange:)]) {
+            [self.delegate syntaxViewController:self didColorRange:range];
+        }
+        self.recoloring = NO;
     }
     else {
         [self.view.textStorage setAttributes:self.defaultTextAttributes range:range];
@@ -834,37 +835,9 @@ static void * const KVO = (void*)&KVO;
     [self textViewDidChangeSelection:[NSNotification notificationWithName:nil object:self.view]];
 }
 
-- (void)syntaxWillColor:(ASKSyntax *)syntax {
-    if([self.delegate respondsToSelector:@selector(syntaxViewController:syntaxWillColor:)]) {
-        [self.delegate syntaxViewController:self syntaxWillColor:syntax];
-    }
-}
-
-- (void)syntaxIsColoring:(ASKSyntax *)syntax {
-    if([self.delegate respondsToSelector:@selector(syntaxViewController:syntaxIsColoring:)]) {
-        [self.delegate syntaxViewController:self syntaxIsColoring:syntax];
-    }
-}
-
-- (void)syntaxDidColor:(ASKSyntax *)syntax {
-    if([self.delegate respondsToSelector:@selector(syntaxViewController:syntaxDidColor:)]) {
-        [self.delegate syntaxViewController:self syntaxDidColor:syntax];
-    }
-}
-
-- (NSArray *)syntax:(ASKSyntax *)syntax userIdentifiersForKeywordComponentName:(NSString *)inModeName {
-    if([inModeName isEqualToString:@"UserIdentifiers"]) {
-        return self.userIdentifiers;
-    }
-    
-    NSLog(@"Unknown component name in -syntax:userIdentifiersForKeywordComponentName: %@", inModeName);
-    
-    return nil;
-}
-
-- (NSDictionary *)syntax:(ASKSyntax *)syntax textAttributesForComponentName:(NSString *)name color:(NSColor *)color {
-    if([self.delegate respondsToSelector:@selector(syntaxViewController:syntax:textAttributesForComponentName:color:)]) {
-        return [self.delegate syntaxViewController:self syntax:syntax textAttributesForComponentName:name color:color];
+- (NSDictionary *)syntaxColorist:(ASKSyntaxColorist *)syntaxColorist textAttributesForSyntaxComponent:(ASKSyntaxComponent *)component color:(NSColor *)color {
+    if([self.delegate respondsToSelector:@selector(syntaxViewController:syntax:textAttributesForSyntaxComponent:color:)]) {
+        return [self.delegate syntaxViewController:self syntax:self.syntax textAttributesForSyntaxComponent:component color:color];
     }
     else {
         return nil;
@@ -1003,7 +976,7 @@ static void * const KVO = (void*)&KVO;
     if(!sig) {
         struct objc_method_description method = protocol_getMethodDescription(@protocol(NSTextViewDelegate), aSelector, NO, YES);
         if(!method.name) {
-            method = protocol_getMethodDescription(@protocol(ASKSyntaxDelegate), aSelector, NO, YES);
+            method = protocol_getMethodDescription(@protocol(ASKSyntaxColoristDelegate), aSelector, NO, YES);
         }
         
         if(method.name && [self.delegate respondsToSelector:aSelector]) {

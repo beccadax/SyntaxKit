@@ -10,6 +10,7 @@
 
 @interface ASKSyntax (syntaxForType)
 
++ (void)invalidateSyntaxes;
 + (instancetype)syntaxForType:(NSString*)type;
 
 @end

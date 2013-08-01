@@ -12,6 +12,9 @@ static NSMutableDictionary * Syntaxes = nil;
 
 @implementation ASKSyntax (syntaxForType)
 
++ (void)invalidateSyntaxes {
+    Syntaxes = nil;
+}
 
 + (NSURL *)userSyntaxesURL {
     NSURL * appSupportURL = [[NSFileManager new] URLForDirectory:NSApplicationSupportDirectory inDomain:NSUserDomainMask appropriateForURL:nil create:YES error:NULL];

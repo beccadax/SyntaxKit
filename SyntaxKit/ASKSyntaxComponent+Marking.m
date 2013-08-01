@@ -33,33 +33,26 @@
 
 - (void)marker:(ASKSyntaxMarker *)marker markInString:(NSMutableAttributedString *)string {
     @try {
-        if( [self.type isEqualToString: @"BlockComment"] )
-        {
+        if([self.type isEqualToString:@"BlockComment"]) {
             [self marker:marker markCommentsInString:string];
         }
-        else if( [self.type isEqualToString: @"OneLineComment"] )
-        {
+        else if([self.type isEqualToString:@"OneLineComment"]) {
             [self marker:marker markOneLineCommentInString:string];
         }
-        else if( [self.type isEqualToString: @"String"] )
-        {
+        else if([self.type isEqualToString:@"String"]) {
             [self marker:marker markStringsInString:string]; 
         }
-        else if( [self.type isEqualToString: @"Tag"] )
-        {
+        else if([self.type isEqualToString:@"Tag"]) {
             [self marker:marker markTagInString:string];
         }
-        else if( [self.type isEqualToString: @"Keywords"] )
-        {
+        else if([self.type isEqualToString:@"Keywords"]) {
             NSArray* identifiers = self.keywords;
-            if( !identifiers ) {
+            if(identifiers == nil) {
                 identifiers = [marker.delegate syntaxMarker:marker userIdentifiersForKeywordMode:self.name];
             }
-            if( identifiers )
-            {
-                for( NSString * identifier in identifiers ) {
-                    [self marker:marker markIdentifier:identifier inString: string];
-                }
+            
+            for(NSString * identifier in identifiers) {
+                [self marker:marker markIdentifier:identifier inString:string];
             }
         }
     }
@@ -69,105 +62,101 @@
     }
 }
 
--(NSDictionary*)	textAttributes {
+-(NSDictionary*)textAttributes {
 	return @{ ASKSyntaxModeAttributeName: self.name };
 }
 
--(void)marker:(ASKSyntaxMarker*)marker markStringsInString: (NSMutableAttributedString*) s
-{
-    NSScanner*			scanner = [NSScanner scannerWithString: [s string]];
-    NSDictionary*		newAttributes = [self textAttributes];
-    BOOL				isEndChar = NO;
-    unichar				escapeChar = '\\';
+- (void)marker:(ASKSyntaxMarker*)marker markStringsInString:(NSMutableAttributedString*)string {
+    NSScanner * scanner = [NSScanner scannerWithString:string.string];
+    NSDictionary * newAttributes = [self textAttributes];
+    BOOL isEndChar = NO;
     
-    if( [self.escapeChar length] != 0 ) {
-        escapeChar = [self.escapeChar characterAtIndex: 0];
-    }
+    unichar escapeChar = self.escapeChar.length ? [self.escapeChar characterAtIndex:0] : '\\';
     
-    while( ![scanner isAtEnd] )
-    {
-        NSUInteger startOffset, endOffset;
+    while(!scanner.isAtEnd) {
         isEndChar = NO;
         
         [marker.delegate syntaxMarkerIsMarking:marker];
         
         // Look for start of string:
-        [scanner scanUpToString: self.start intoString: nil];
-        startOffset = [scanner scanLocation];
-        if( ![scanner scanString:self.start intoString:nil] )
+        [scanner scanUpToString:self.start intoString:NULL];
+        NSUInteger startOffset = scanner.scanLocation;
+        if(![scanner scanString:self.start intoString:NULL]) {
             return;
+        }
         
-        while( !isEndChar && ![scanner isAtEnd] )	// Loop until we find end-of-string marker or our text to color is finished:
-        {
-            [scanner scanUpToString: self.end intoString: nil];
-            if( ([self.escapeChar length] == 0) || [[s string] characterAtIndex: ([scanner scanLocation] -1)] != escapeChar )	// Backslash before the end marker? That means ignore the end marker.
-                isEndChar = YES;	// A real one! Terminate loop.
-            if( ![scanner scanString:self.end intoString:nil] )	// But skip this char before that.
+        // Until we reach an end character or the end of the string...
+        while(!isEndChar && !scanner.isAtEnd) {
+            [scanner scanUpToString:self.end intoString:NULL];
+            
+            // Look behind. Is there an escape character?
+            // "scanner.scanLocation - 1" is safe because we must have already scanned self.start in.
+            // XXX We really want to check if there's an *odd* number of escape characters.
+            if(self.escapeChar.length == 0 || [string.string characterAtIndex:(scanner.scanLocation - 1)] != escapeChar) {
+                // No! Terminate the loop.
+                isEndChar = YES;
+            }
+            
+            // Consume the terminator.
+            if(![scanner scanString:self.end intoString:NULL]) {
                 return;
+            }
             
             [marker.delegate syntaxMarkerIsMarking:marker];
         }
         
-        endOffset = [scanner scanLocation];
+        NSUInteger endOffset = scanner.scanLocation;
         
-        // Now mess with the string's styles:
-        [s addAttributes: newAttributes range: NSMakeRange( startOffset, endOffset - startOffset )];
+        [string addAttributes:newAttributes range:NSMakeRange(startOffset, endOffset - startOffset)];
     }
 }
 
-
--(void)marker:(ASKSyntaxMarker*)marker markCommentsInString: (NSMutableAttributedString*) s
-{
-    NSScanner*			scanner = [NSScanner scannerWithString: [s string]];
-    NSDictionary*		newAttributes = [self textAttributes];
+- (void)marker:(ASKSyntaxMarker*)marker markCommentsInString:(NSMutableAttributedString*)string {
+    NSScanner * scanner = [NSScanner scannerWithString:string.string];
+    NSDictionary * newAttributes = [self textAttributes];
     
-    while( ![scanner isAtEnd] )
-    {
-        NSUInteger startOffset, endOffset;
-        
+    while(!scanner.isAtEnd) {
         // Look for start of multi-line comment:
-        [scanner scanUpToString: self.start intoString: nil];
-        startOffset = [scanner scanLocation];
-        if( ![scanner scanString:self.start intoString:nil] )
+        [scanner scanUpToString:self.start intoString:NULL];
+        NSUInteger startOffset = scanner.scanLocation;
+        if(![scanner scanString:self.start intoString:NULL]) {
             return;
+        }
         
         // Look for associated end-of-comment marker:
-        [scanner scanUpToString: self.end intoString: nil];
-        if( ![scanner scanString: self.end intoString: nil] )
-        /*return*/;  // Don't exit. If user forgot trailing marker, indicate this by "bleeding" until end of string.
-        endOffset = [scanner scanLocation];
+        [scanner scanUpToString:self.end intoString:NULL];
+        if(![scanner scanString:self.end intoString:NULL]) {
+            // Don't exit. If user forgot trailing marker, indicate this by "bleeding" until end of string.
+            /* return; */  
+        }
+        NSUInteger endOffset = scanner.scanLocation;
         
-        // Now mess with the string's styles:
-        [s addAttributes: newAttributes range: NSMakeRange( startOffset, endOffset -startOffset )];
+        [string addAttributes:newAttributes range:NSMakeRange(startOffset, endOffset - startOffset)];
         
         [marker.delegate syntaxMarkerIsMarking:marker];
     }
 }
 
 
--(void)marker:(ASKSyntaxMarker*)marker markOneLineCommentInString: (NSMutableAttributedString*) s
-{
-    NSScanner*			scanner = [NSScanner scannerWithString: [s string]];
-    NSDictionary*		newAttributes = [self textAttributes];
+- (void)marker:(ASKSyntaxMarker*)marker markOneLineCommentInString:(NSMutableAttributedString*)string {
+    NSScanner * scanner = [NSScanner scannerWithString:string.string];
+    NSDictionary * newAttributes = [self textAttributes];
     
-    while( ![scanner isAtEnd] )
-    {
-        NSUInteger startOffset, endOffset;
-        
+    while(!scanner.isAtEnd) {
         // Look for start of one-line comment:
-        [scanner scanUpToString: self.start intoString: nil];
-        startOffset = [scanner scanLocation];
-        if( ![scanner scanString:self.start intoString:nil] )
+        [scanner scanUpToString:self.start intoString:NULL];
+        NSUInteger startOffset = scanner.scanLocation;
+        if(![scanner scanString:self.start intoString:NULL]) {
             return;
+        }
         
         // Look for associated line break:
-        if( ![scanner skipUpToCharactersFromSet:[NSCharacterSet characterSetWithCharactersInString: @"\n\r"]] )
-            ;
+        if(![scanner skipUpToCharactersFromSet:[NSCharacterSet characterSetWithCharactersInString:@"\n\r"]]) {
+            /* return; */
+        }
+        NSUInteger endOffset = scanner.scanLocation;
         
-        endOffset = [scanner scanLocation];
-        
-        // Now mess with the string's styles:
-        [s addAttributes: newAttributes range: NSMakeRange( startOffset, endOffset -startOffset )];
+        [string addAttributes:newAttributes range:NSMakeRange(startOffset, endOffset - startOffset)];
         
         [marker.delegate syntaxMarkerIsMarking:marker];
     }
@@ -179,103 +168,105 @@
 //		Colorize keywords in the text view.
 // -----------------------------------------------------------------------------
 
--(void)marker:(ASKSyntaxMarker*)marker markIdentifier: (NSString*) ident inString: (NSMutableAttributedString*) s
-{
-    NSScanner*			scanner = [NSScanner scannerWithString: [s string]];
-    NSDictionary*		newAttributes = [self textAttributes];
-    NSUInteger			startOffset = 0;
+- (void)marker:(ASKSyntaxMarker*)marker markIdentifier:(NSString*)identifier inString:(NSMutableAttributedString*)string {
+    NSScanner * scanner = [NSScanner scannerWithString:string.string];
+    NSDictionary * newAttributes = [self textAttributes];
+    NSUInteger startOffset = 0;
     
     // Skip any leading whitespace chars, somehow NSScanner doesn't do that:
-    if( self.charset )
-    {
-        while( startOffset < [[s string] length] )
-        {
-            if( [self.charset characterIsMember: [[s string] characterAtIndex: startOffset]] )
+    if(self.charset) {
+        while(startOffset < string.length) {
+            if([self.charset characterIsMember:[string.string characterAtIndex:startOffset]]) {
                 break;
+            }
             startOffset++;
         }
     }
     
-    [scanner setScanLocation: startOffset];
+    scanner.scanLocation = startOffset;
     
-    while( ![scanner isAtEnd] )
-    {
+    while(!scanner.isAtEnd) {
         // Look for start of identifier:
-        [scanner scanUpToString: ident intoString: nil];
-        startOffset = [scanner scanLocation];
-        if( ![scanner scanString:ident intoString:nil] )
+        [scanner scanUpToString:identifier intoString:NULL];
+        startOffset = scanner.scanLocation;
+        if(![scanner scanString:identifier intoString:NULL]) {
             return;
-        
-        if( startOffset > 0 )	// Check that we're not in the middle of an identifier:
-        {
-            // Alphanum character before identifier start?
-            if( [self.charset characterIsMember: [[s string] characterAtIndex: (startOffset - 1)]] )  // If charset is NIL, this evaluates to NO.
-                continue;
         }
         
-        if( (startOffset + [ident length] + 1) < [s length] )
-        {
-            // Alphanum character following our identifier?
-            if( [self.charset characterIsMember: [[s string] characterAtIndex: (startOffset + [ident length])]] )  // If charset is NIL, this evaluates to NO.
+        // Check that we're not in the middle of an identifier:
+        
+        // Is there a previous character?
+        if(startOffset > 0)	{
+            // Is it a valid identifier character?
+            if([self.charset characterIsMember:[string.string characterAtIndex:(startOffset - 1)]]) {
+                // Skip this.
                 continue;
+            }
         }
         
-        // Now mess with the string's styles:
-        [s addAttributes: newAttributes range: NSMakeRange( startOffset, [ident length] )];
+        // Is there a next character?
+        if((startOffset + identifier.length + 1) < string.length) {
+            // Is it a valid identifier character?
+            if([self.charset characterIsMember:[string.string characterAtIndex:(startOffset + identifier.length)]]) {
+                // Skip this.
+                continue;
+            }
+        }
+        
+        // If we got here, this really is a whole identifier, not a substring of something larger. Mark it.
+        [string addAttributes:newAttributes range:NSMakeRange(startOffset, identifier.length)];
         
         [marker.delegate syntaxMarkerIsMarking:marker];
     }
 }
 
-
--(void)marker:(ASKSyntaxMarker*)marker markTagInString: (NSMutableAttributedString*) s
-{
-    NSScanner*			scanner = [NSScanner scannerWithString: [s string]];
-    NSDictionary*		newAttributes = [self textAttributes];
+- (void)marker:(ASKSyntaxMarker*)marker markTagInString:(NSMutableAttributedString*)string {
+    NSScanner * scanner = [NSScanner scannerWithString:string.string];
+    NSDictionary * newAttributes = [self textAttributes];
     
-    while( ![scanner isAtEnd] )
-    {
-        NSUInteger startOffset, endOffset;
+    while(!scanner.isAtEnd) {
+        [scanner scanUpToString:self.start intoString:NULL];
+        NSUInteger startOffset = scanner.scanLocation;
         
-        // Look for start of one-line comment:
-        [scanner scanUpToString: self.start intoString: nil];
-        startOffset = [scanner scanLocation];
-        if( startOffset >= [s length] )
+        // Look for start of ignored style:
+        if(startOffset >= string.length) {
             return;
-        NSString*   scMode = [s attribute:ASKSyntaxModeAttributeName atIndex:startOffset effectiveRange:NULL];
-        if( ![scanner scanString:self.start intoString:nil] )
+        }
+        NSString * currentMode = [string attribute:ASKSyntaxModeAttributeName atIndex:startOffset effectiveRange:NULL];
+        
+        if(![scanner scanString:self.start intoString:NULL]) {
             return;
+        }
         
         // If start lies in range of ignored style, don't colorize it:
-        if( self.ignoredComponent != nil && [scMode isEqualToString: self.ignoredComponent] )
+        if(self.ignoredComponent != nil && [currentMode isEqualToString:self.ignoredComponent]) {
             continue;
+        }
         
         // Look for matching end marker:
-        while( ![scanner isAtEnd] )
-        {
+        while(!scanner.isAtEnd) {
             // Scan up to the next occurence of the terminating sequence:
-            [scanner scanUpToString: self.end intoString:nil];
+            [scanner scanUpToString:self.end intoString:NULL];
             
             // Now, if the mode of the end marker is not the mode we were told to ignore,
             //  we're finished now and we can exit the inner loop:
-            endOffset = [scanner scanLocation];
-            if( endOffset < [s length] )
-            {
-                scMode = [s attribute:ASKSyntaxModeAttributeName atIndex:endOffset effectiveRange:NULL];
-                [scanner scanString: self.end intoString: nil];   // Also skip the terminating sequence.
-                if( self.ignoredComponent == nil || ![scMode isEqualToString: self.ignoredComponent] )
+            NSUInteger candidateEndOffset = scanner.scanLocation;
+            if(candidateEndOffset < string.length) {
+                currentMode = [string attribute:ASKSyntaxModeAttributeName atIndex:candidateEndOffset effectiveRange:NULL];
+                [scanner scanString:self.end intoString:NULL];   // Also skip the terminating sequence.
+                if(self.ignoredComponent == nil || ![currentMode isEqualToString:self.ignoredComponent]) {
+                    // We found the end marker!
                     break;
+                }
             }
             
             // Otherwise we keep going, look for the next occurence of endCh and hope it isn't in that style.
         }
+        NSUInteger endOffset = scanner.scanLocation;
         
-        endOffset = [scanner scanLocation];
+        [string addAttributes:newAttributes range:NSMakeRange(startOffset, endOffset - startOffset)];
         
         [marker.delegate syntaxMarkerIsMarking:marker];
-        
-        // Now mess with the string's styles:
-        [s addAttributes: newAttributes range: NSMakeRange( startOffset, endOffset - startOffset )];
     }
 }
 

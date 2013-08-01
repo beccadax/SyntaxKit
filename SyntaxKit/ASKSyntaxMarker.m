@@ -36,23 +36,29 @@ NSString * const ASKSyntaxModeAttributeName = @"ASKSyntaxMode";
 
 - (void)markRange:(NSRange)range ofAttributedString:(NSMutableAttributedString *)string withSyntax:(ASKSyntax *)syntax {
     // Kludge fix for case where we sometimes exceed text length:ra
-    NSInteger diff = [string length] -(range.location +range.length);
-    if( diff < 0 )
+    NSInteger diff = string.length - (range.location + range.length);
+    if(diff < 0) {
         range.length += diff;
+    }
     
     // Get the text we'll be working with:
-    NSMutableAttributedString*	vString = [string mutableCopy];
-    [vString removeAttribute:ASKSyntaxModeAttributeName range:range];
+    NSMutableAttributedString * scratchString = [[NSMutableAttributedString alloc] initWithString:[string.string substringWithRange:range]];
     
-    // Load colors and fonts to use from preferences:
-    // Load our dictionary which contains info on coloring this language:
-    for(ASKSyntaxComponent *vCurrComponent in syntax.components)
-    {
-        [vCurrComponent marker:self markInString:vString];
+    for(ASKSyntaxComponent * component in syntax.components) {
+        [component marker:self markInString:scratchString];
     }
     
     // Replace the range with our recolored part:
-    [string replaceCharactersInRange: range withAttributedString: vString];
+    [scratchString enumerateAttribute:ASKSyntaxModeAttributeName inRange:NSMakeRange(0, scratchString.length) options:0 usingBlock:^(id value, NSRange scratchRange, BOOL *stop) {
+        NSRange realRange = NSMakeRange(scratchRange.location + range.location, scratchRange.length);
+        
+        if(value) {
+            [string addAttribute:ASKSyntaxModeAttributeName value:value range:realRange];
+        }
+        else {
+            [string removeAttribute:ASKSyntaxModeAttributeName range:realRange];
+        }
+    }];
 }
 
 @end

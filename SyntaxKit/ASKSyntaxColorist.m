@@ -34,7 +34,6 @@
 
 @interface ASKSyntaxColorist () <ASKSyntaxMarkerDelegate>
 
-@property (strong) NSDictionary * defaultTextAttributes;
 @property (strong) ASKSyntaxMarker * syntaxMarker;
 
 @end
@@ -55,8 +54,6 @@
         return;
     }
     
-    self.defaultTextAttributes = defaultTextAttributes;
-    
     [self.delegate syntaxColoristWillColor:self];
     
 	@try
@@ -66,11 +63,11 @@
 		[self.syntaxMarker markRange:range ofAttributedString:textStorage withSyntax:syntax];
         
         [textStorage enumerateAttribute:ASKSyntaxComponentAttributeName inRange:range options:0 usingBlock:^(ASKSyntaxComponent * component, NSRange range, BOOL *stop) {
-            NSDictionary * attributes = [self defaultTextAttributes];
+            NSDictionary * attributes = defaultTextAttributes;
             
             if(component) {
                 NSColor * color = [self.colorPalette colorForSyntaxComponent:component];
-                attributes = [self textAttributesForComponent:component color:color];
+                attributes = [self textAttributesForComponent:component color:color defaultAttributes:attributes];
             }
             
             [textStorage setAttributes:attributes range:range];
@@ -87,7 +84,6 @@
 	}
 }
 
-
 // -----------------------------------------------------------------------------
 //	textAttributesForComponentName:color:
 //		Return the styles to use for the given mode/color. This calls upon the
@@ -98,10 +94,10 @@
 //		sequence that would end that block comment or similar).
 // -----------------------------------------------------------------------------
 
--(NSDictionary*)	textAttributesForComponent: (ASKSyntaxComponent*)component color:(NSColor*)color
+-(NSDictionary*)	textAttributesForComponent: (ASKSyntaxComponent*)component color:(NSColor*)color defaultAttributes:(NSDictionary *)defaultAttributes
 {
 	NSDictionary*		vLocalStyles = [self.delegate syntaxColorist:self textAttributesForSyntaxComponent:component color:color];
-	NSMutableDictionary*vStyles = [[self defaultTextAttributes] mutableCopy];
+	NSMutableDictionary*vStyles = [defaultAttributes mutableCopy];
 	if( vLocalStyles )
 		[vStyles addEntriesFromDictionary: vLocalStyles];
 	else

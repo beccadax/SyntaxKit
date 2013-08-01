@@ -34,6 +34,7 @@
 
 @class ASKLineNumberView;
 @class ASKSyntax;
+@class ASKSyntaxComponent;
 
 @protocol ASKSyntaxViewControllerDelegate;
 
@@ -88,6 +89,6 @@
 - (void)syntaxViewController:(ASKSyntaxViewController*)controller syntaxIsColoring:(ASKSyntax*)syntax;
 - (void)syntaxViewController:(ASKSyntaxViewController*)controller syntaxDidColor:(ASKSyntax*)syntax;
 
-- (NSDictionary*)syntaxViewController:(ASKSyntaxViewController*)controller syntax:(ASKSyntax*)syntax textAttributesForComponentName:(NSString*)name color:(NSColor*)color;
+- (NSDictionary*)syntaxViewController:(ASKSyntaxViewController*)controller syntax:(ASKSyntax*)syntax textAttributesForSyntaxComponent:(ASKSyntaxComponent*)component color:(NSColor*)color;
 
 @end

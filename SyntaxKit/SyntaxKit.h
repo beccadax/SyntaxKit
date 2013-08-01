@@ -10,6 +10,7 @@
 
 #import "ASKSyntax.h"
 #import "ASKSyntax+syntaxForType.h"
+#import "ASKSyntaxComponent.h"
 
 #import "ASKSyntaxViewController.h"
 #import "ASKLineNumberView.h"

@@ -63,7 +63,7 @@
 }
 
 -(NSDictionary*)textAttributes {
-	return @{ ASKSyntaxModeAttributeName: self.name };
+	return @{ ASKSyntaxComponentAttributeName: self };
 }
 
 - (void)marker:(ASKSyntaxMarker*)marker markStringsInString:(NSMutableAttributedString*)string {
@@ -232,14 +232,14 @@
         if(startOffset >= string.length) {
             return;
         }
-        NSString * currentMode = [string attribute:ASKSyntaxModeAttributeName atIndex:startOffset effectiveRange:NULL];
+        ASKSyntaxComponent * currentComponent = [string attribute:ASKSyntaxComponentAttributeName atIndex:startOffset effectiveRange:NULL];
         
         if(![scanner scanString:self.start intoString:NULL]) {
             return;
         }
         
         // If start lies in range of ignored style, don't colorize it:
-        if(self.ignoredComponent != nil && [currentMode isEqualToString:self.ignoredComponent]) {
+        if(self.ignoredComponent != nil && [currentComponent.name isEqualToString:self.ignoredComponent]) {
             continue;
         }
         
@@ -252,9 +252,9 @@
             //  we're finished now and we can exit the inner loop:
             NSUInteger candidateEndOffset = scanner.scanLocation;
             if(candidateEndOffset < string.length) {
-                currentMode = [string attribute:ASKSyntaxModeAttributeName atIndex:candidateEndOffset effectiveRange:NULL];
+                currentComponent = [string attribute:ASKSyntaxComponentAttributeName atIndex:candidateEndOffset effectiveRange:NULL];
                 [scanner scanString:self.end intoString:NULL];   // Also skip the terminating sequence.
-                if(self.ignoredComponent == nil || ![currentMode isEqualToString:self.ignoredComponent]) {
+                if(self.ignoredComponent == nil || ![currentComponent.name isEqualToString:self.ignoredComponent]) {
                     // We found the end marker!
                     break;
                 }

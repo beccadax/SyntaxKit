@@ -30,7 +30,7 @@
 #import "ASKSyntax.h"
 #import "ASKSyntaxComponent+Marking.h"
 
-NSString * const ASKSyntaxModeAttributeName = @"ASKSyntaxMode";
+NSString * const ASKSyntaxComponentAttributeName = @"ASKSyntaxMode";
 
 @implementation ASKSyntaxMarker
 
@@ -49,14 +49,14 @@ NSString * const ASKSyntaxModeAttributeName = @"ASKSyntaxMode";
     }
     
     // Replace the range with our recolored part:
-    [scratchString enumerateAttribute:ASKSyntaxModeAttributeName inRange:NSMakeRange(0, scratchString.length) options:0 usingBlock:^(id value, NSRange scratchRange, BOOL *stop) {
+    [scratchString enumerateAttribute:ASKSyntaxComponentAttributeName inRange:NSMakeRange(0, scratchString.length) options:0 usingBlock:^(id value, NSRange scratchRange, BOOL *stop) {
         NSRange realRange = NSMakeRange(scratchRange.location + range.location, scratchRange.length);
         
         if(value) {
-            [string addAttribute:ASKSyntaxModeAttributeName value:value range:realRange];
+            [string addAttribute:ASKSyntaxComponentAttributeName value:value range:realRange];
         }
         else {
-            [string removeAttribute:ASKSyntaxModeAttributeName range:realRange];
+            [string removeAttribute:ASKSyntaxComponentAttributeName range:realRange];
         }
     }];
 }

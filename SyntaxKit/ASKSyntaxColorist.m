@@ -67,23 +67,14 @@
         
         NSUserDefaults * vPrefs = [NSUserDefaults standardUserDefaults];
         
-        [textStorage enumerateAttribute:ASKSyntaxModeAttributeName inRange:range options:0 usingBlock:^(NSString * mode, NSRange range, BOOL *stop) {
+        [textStorage enumerateAttribute:ASKSyntaxComponentAttributeName inRange:range options:0 usingBlock:^(ASKSyntaxComponent * component, NSRange range, BOOL *stop) {
             NSDictionary * attributes = [self defaultTextAttributes];
             
-            if(mode) {
-                NSString*   vColorKeyName = [@"SyntaxColoring:Color:" stringByAppendingString: mode];
-                NSColor*	vColor = [[vPrefs arrayForKey: vColorKeyName] colorValue];
+            if(component) {
+                NSString*   vColorKeyName = [@"SyntaxColoring:Color:" stringByAppendingString: component.name];
+                NSColor*	vColor = [[vPrefs arrayForKey: vColorKeyName] colorValue] ?: component.color;
                 
-                if( !vColor ) {
-                    // XXX this loop is a temporary hack
-                    for(ASKSyntaxComponent * vCurrComponent in syntax.components) {
-                        if([vCurrComponent.name isEqualToString:mode]) {
-                            vColor = vCurrComponent.color;
-                        }
-                    }
-                }
-                
-                attributes = [self textAttributesForComponentName:mode color:vColor];
+                attributes = [self textAttributesForComponent:component color:vColor];
             }
             
             [textStorage setAttributes:attributes range:range];
@@ -111,17 +102,17 @@
 //		sequence that would end that block comment or similar).
 // -----------------------------------------------------------------------------
 
--(NSDictionary*)	textAttributesForComponentName: (NSString*)attr color: (NSColor*)col
+-(NSDictionary*)	textAttributesForComponent: (ASKSyntaxComponent*)component color:(NSColor*)color
 {
-	NSDictionary*		vLocalStyles = [self.delegate syntaxColorist:self textAttributesForComponentName: attr color: col];
+	NSDictionary*		vLocalStyles = [self.delegate syntaxColorist:self textAttributesForSyntaxComponent:component color:color];
 	NSMutableDictionary*vStyles = [[self defaultTextAttributes] mutableCopy];
 	if( vLocalStyles )
 		[vStyles addEntriesFromDictionary: vLocalStyles];
 	else
-		vStyles[NSForegroundColorAttributeName] = col;
+		vStyles[NSForegroundColorAttributeName] = color;
 	
 	// Make sure partial recoloring works:
-	vStyles[ASKSyntaxModeAttributeName] = attr;
+	vStyles[ASKSyntaxComponentAttributeName] = component;
 	
 	return vStyles;
 }

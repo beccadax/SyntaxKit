@@ -29,6 +29,7 @@
 #import <Foundation/Foundation.h>
 
 @class ASKSyntax;
+@class ASKSyntaxComponent;
 @protocol ASKSyntaxColoristDelegate;
 
 @interface ASKSyntaxColorist : NSObject
@@ -48,6 +49,6 @@
 - (void)syntaxColoristDidColor:(ASKSyntaxColorist*)syntaxColorist;
 
 - (NSArray*)syntaxColorist:(ASKSyntaxColorist*)syntaxColorist userIdentifiersForKeywordComponentName:(NSString*)inModeName;
-- (NSDictionary*)syntaxColorist:(ASKSyntaxColorist*)syntaxColorist textAttributesForComponentName:(NSString*)name color:(NSColor*)color;
+- (NSDictionary*)syntaxColorist:(ASKSyntaxColorist*)syntaxColorist textAttributesForSyntaxComponent:(ASKSyntaxComponent*)component color:(NSColor*)color;
 
 @end

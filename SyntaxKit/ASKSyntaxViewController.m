@@ -241,10 +241,10 @@ static void * const KVO = (void*)&KVO;
 	if( range.length > 0 )
 	{
 		NSRange			effectiveRange;
-		NSString*		rangeMode;
+		ASKSyntaxComponent *		rangeMode;
 		
 		
-		rangeMode = [textStorage attribute: ASKSyntaxModeAttributeName
+		rangeMode = [textStorage attribute: ASKSyntaxComponentAttributeName
 								atIndex: currRange.location
 								effectiveRange: &effectiveRange];
 		
@@ -867,9 +867,9 @@ static void * const KVO = (void*)&KVO;
     return nil;
 }
 
-- (NSDictionary *)syntaxColorist:(ASKSyntaxColorist *)syntaxColorist textAttributesForComponentName:(NSString *)name color:(NSColor *)color {
-    if([self.delegate respondsToSelector:@selector(syntaxViewController:syntax:textAttributesForComponentName:color:)]) {
-        return [self.delegate syntaxViewController:self syntax:self.syntax textAttributesForComponentName:name color:color];
+- (NSDictionary *)syntaxColorist:(ASKSyntaxColorist *)syntaxColorist textAttributesForSyntaxComponent:(ASKSyntaxComponent *)component color:(NSColor *)color {
+    if([self.delegate respondsToSelector:@selector(syntaxViewController:syntax:textAttributesForSyntaxComponent:color:)]) {
+        return [self.delegate syntaxViewController:self syntax:self.syntax textAttributesForSyntaxComponent:component color:color];
     }
     else {
         return nil;

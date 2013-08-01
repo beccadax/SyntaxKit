@@ -28,7 +28,7 @@
 
 #import <Foundation/Foundation.h>
 
-extern NSString * const ASKSyntaxModeAttributeName;
+extern NSString * const ASKSyntaxComponentAttributeName;
 
 @class ASKSyntax;
 @protocol ASKSyntaxMarkerDelegate;

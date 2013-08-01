@@ -8,6 +8,9 @@
 
 #import "ASKSyntax.h"
 
+extern NSString * const ASKSyntaxWillInvalidateSyntaxesNotification;
+extern NSString * const ASKSyntaxDidInvalidateSyntaxesNotification;
+
 @interface ASKSyntax (syntaxForType)
 
 + (void)invalidateSyntaxes;

@@ -8,12 +8,17 @@
 
 #import "ASKSyntax+syntaxForType.h"
 
+NSString * const ASKSyntaxWillInvalidateSyntaxesNotification = @"ASKSyntaxWillInvalidateSyntaxes";
+NSString * const ASKSyntaxDidInvalidateSyntaxesNotification = @"ASKSyntaxDidInvalidateSyntaxes";
+
 static NSMutableDictionary * Syntaxes = nil;
 
 @implementation ASKSyntax (syntaxForType)
 
 + (void)invalidateSyntaxes {
+    [NSNotificationCenter.defaultCenter postNotificationName:ASKSyntaxWillInvalidateSyntaxesNotification object:self];
     Syntaxes = nil;
+    [NSNotificationCenter.defaultCenter postNotificationName:ASKSyntaxDidInvalidateSyntaxesNotification object:self];
 }
 
 + (NSURL *)userSyntaxesURL {

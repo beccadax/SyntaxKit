@@ -88,7 +88,6 @@
 @optional
 
 - (void)syntaxViewController:(ASKSyntaxViewController*)controller syntaxWillColor:(ASKSyntax*)syntax;
-- (void)syntaxViewController:(ASKSyntaxViewController*)controller syntaxIsColoring:(ASKSyntax*)syntax;
 - (void)syntaxViewController:(ASKSyntaxViewController*)controller syntaxDidColor:(ASKSyntax*)syntax;
 
 - (NSDictionary*)syntaxViewController:(ASKSyntaxViewController*)controller syntax:(ASKSyntax*)syntax textAttributesForSyntaxComponent:(ASKSyntaxComponent*)component color:(NSColor*)color;

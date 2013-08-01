@@ -73,8 +73,6 @@
     while(!scanner.isAtEnd) {
         isEndChar = NO;
         
-        [marker.delegate syntaxMarkerIsMarking:marker];
-        
         // Look for start of string:
         [scanner scanUpToString:self.start intoString:NULL];
         NSUInteger startOffset = scanner.scanLocation;
@@ -98,8 +96,6 @@
             if(![scanner scanString:self.end intoString:NULL]) {
                 return;
             }
-            
-            [marker.delegate syntaxMarkerIsMarking:marker];
         }
         
         NSUInteger endOffset = scanner.scanLocation;
@@ -129,8 +125,6 @@
         NSUInteger endOffset = scanner.scanLocation;
         
         [string addAttributes:newAttributes range:NSMakeRange(startOffset, endOffset - startOffset)];
-        
-        [marker.delegate syntaxMarkerIsMarking:marker];
     }
 }
 
@@ -154,8 +148,6 @@
         NSUInteger endOffset = scanner.scanLocation;
         
         [string addAttributes:newAttributes range:NSMakeRange(startOffset, endOffset - startOffset)];
-        
-        [marker.delegate syntaxMarkerIsMarking:marker];
     }
 }
 
@@ -212,8 +204,6 @@
         
         // If we got here, this really is a whole identifier, not a substring of something larger. Mark it.
         [string addAttributes:newAttributes range:NSMakeRange(startOffset, identifier.length)];
-        
-        [marker.delegate syntaxMarkerIsMarking:marker];
     }
 }
 
@@ -262,8 +252,6 @@
         NSUInteger endOffset = scanner.scanLocation;
         
         [string addAttributes:newAttributes range:NSMakeRange(startOffset, endOffset - startOffset)];
-        
-        [marker.delegate syntaxMarkerIsMarking:marker];
     }
 }
 

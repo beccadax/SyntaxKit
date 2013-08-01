@@ -47,7 +47,6 @@
 @protocol ASKSyntaxColoristDelegate <NSObject>
 
 - (void)syntaxColoristWillColor:(ASKSyntaxColorist*)syntaxColorist;
-- (void)syntaxColoristIsColoring:(ASKSyntaxColorist*)syntaxColorist;
 - (void)syntaxColoristDidColor:(ASKSyntaxColorist*)syntaxColorist;
 
 - (NSArray*)syntaxColorist:(ASKSyntaxColorist*)syntaxColorist userIdentifiersForKeywordComponentName:(NSString*)inModeName;

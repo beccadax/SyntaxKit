@@ -31,18 +31,9 @@
 extern NSString * const ASKSyntaxComponentAttributeName;
 
 @class ASKSyntax;
-@protocol ASKSyntaxMarkerDelegate;
 
 @interface ASKSyntaxMarker : NSObject
 
-@property (weak) id <ASKSyntaxMarkerDelegate> delegate;
-
 - (void)markRange:(NSRange)range ofAttributedString:(NSMutableAttributedString*)string withSyntax:(ASKSyntax*)syntax userIdentifiers:(NSArray*)userIdentifiers;
-
-@end
-
-@protocol ASKSyntaxMarkerDelegate <NSObject>
-
-- (void)syntaxMarkerIsMarking:(ASKSyntaxMarker*)marker;
 
 @end

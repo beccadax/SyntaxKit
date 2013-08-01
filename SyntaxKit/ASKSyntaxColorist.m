@@ -32,7 +32,7 @@
 #import "ASKSyntaxMarker.h"
 #import "ASKSyntaxColorPalette.h"
 
-@interface ASKSyntaxColorist () <ASKSyntaxMarkerDelegate>
+@interface ASKSyntaxColorist ()
 
 @property (strong) ASKSyntaxMarker * syntaxMarker;
 
@@ -43,7 +43,6 @@
 - (id)init {
     if((self = [super init])) {
         _syntaxMarker = [ASKSyntaxMarker new];
-        _syntaxMarker.delegate = self;
     }
     return self;
 }
@@ -71,7 +70,6 @@
             }
             
             [textStorage setAttributes:attributes range:range];
-            [self.delegate syntaxColoristIsColoring:self];
         }];
 		
 		[textStorage fixFontAttributeInRange: range];	// Make sure Japanese etc. fallback fonts get applied.
@@ -108,10 +106,6 @@
 	newAttributes[ASKSyntaxComponentAttributeName] = component;
 	
 	return newAttributes;
-}
-
-- (void)syntaxMarkerIsMarking:(ASKSyntaxMarker *)marker {
-    [self.delegate syntaxColoristIsColoring:self];
 }
 
 @end

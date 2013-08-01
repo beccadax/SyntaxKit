@@ -823,12 +823,6 @@ static void * const KVO = (void*)&KVO;
     }
 }
 
-- (void)syntaxColoristIsColoring:(ASKSyntaxColorist *)syntaxColorist {
-    if([self.delegate respondsToSelector:@selector(syntaxViewController:syntaxIsColoring:)]) {
-        [self.delegate syntaxViewController:self syntaxIsColoring:self.syntax];
-    }
-}
-
 - (void)syntaxColoristDidColor:(ASKSyntaxColorist *)syntaxColorist {
     if([self.delegate respondsToSelector:@selector(syntaxViewController:syntaxDidColor:)]) {
         [self.delegate syntaxViewController:self syntaxDidColor:self.syntax];

@@ -56,8 +56,7 @@
     
     [self.delegate syntaxColoristWillColor:self];
     
-	@try
-	{        
+	@try {
 		self.coloring = YES;
         
 		[self.syntaxMarker markRange:range ofAttributedString:textStorage withSyntax:syntax];
@@ -94,19 +93,20 @@
 //		sequence that would end that block comment or similar).
 // -----------------------------------------------------------------------------
 
--(NSDictionary*)	textAttributesForComponent: (ASKSyntaxComponent*)component color:(NSColor*)color defaultAttributes:(NSDictionary *)defaultAttributes
-{
-	NSDictionary*		vLocalStyles = [self.delegate syntaxColorist:self textAttributesForSyntaxComponent:component color:color];
-	NSMutableDictionary*vStyles = [defaultAttributes mutableCopy];
-	if( vLocalStyles )
-		[vStyles addEntriesFromDictionary: vLocalStyles];
-	else
-		vStyles[NSForegroundColorAttributeName] = color;
-	
+- (NSDictionary*)textAttributesForComponent:(ASKSyntaxComponent*)component color:(NSColor*)color defaultAttributes:(NSDictionary *)defaultAttributes {
+	NSMutableDictionary * newAttributes = [defaultAttributes mutableCopy];
+    
+    NSDictionary * additionalAttributes = [self.delegate syntaxColorist:self textAttributesForSyntaxComponent:component color:color];
+    if(!additionalAttributes) {
+        additionalAttributes = color ? @{ NSForegroundColorAttributeName: color } : @{};
+    }
+    
+    [newAttributes addEntriesFromDictionary:additionalAttributes];
+    
 	// Make sure partial recoloring works:
-	vStyles[ASKSyntaxComponentAttributeName] = component;
+	newAttributes[ASKSyntaxComponentAttributeName] = component;
 	
-	return vStyles;
+	return newAttributes;
 }
 
 - (void)syntaxMarkerIsMarking:(ASKSyntaxMarker *)marker {

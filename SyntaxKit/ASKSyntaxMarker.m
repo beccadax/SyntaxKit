@@ -34,7 +34,7 @@ NSString * const ASKSyntaxComponentAttributeName = @"ASKSyntaxMode";
 
 @implementation ASKSyntaxMarker
 
-- (void)markRange:(NSRange)range ofAttributedString:(NSMutableAttributedString *)string withSyntax:(ASKSyntax *)syntax {
+- (void)markRange:(NSRange)range ofAttributedString:(NSMutableAttributedString *)string withSyntax:(ASKSyntax *)syntax userIdentifiers:(NSArray *)userIdentifiers {
     // Kludge fix for case where we sometimes exceed text length:ra
     NSInteger diff = string.length - (range.location + range.length);
     if(diff < 0) {
@@ -45,7 +45,7 @@ NSString * const ASKSyntaxComponentAttributeName = @"ASKSyntaxMode";
     NSMutableAttributedString * scratchString = [[NSMutableAttributedString alloc] initWithString:[string.string substringWithRange:range]];
     
     for(ASKSyntaxComponent * component in syntax.components) {
-        [component marker:self markInString:scratchString];
+        [component marker:self markInString:scratchString withUserIdentifiers:userIdentifiers];
     }
     
     // Replace the range with our recolored part:

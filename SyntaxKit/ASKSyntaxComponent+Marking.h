@@ -31,6 +31,6 @@
 
 @interface ASKSyntaxComponent (Marking)
 
-- (void)marker:(ASKSyntaxMarker*)marker markInString:(NSMutableAttributedString*)string;
+- (void)marker:(ASKSyntaxMarker*)marker markInString:(NSMutableAttributedString*)string withUserIdentifiers:(NSArray*)userIdentifiers;
 
 @end

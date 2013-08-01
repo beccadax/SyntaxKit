@@ -37,13 +37,12 @@ extern NSString * const ASKSyntaxComponentAttributeName;
 
 @property (weak) id <ASKSyntaxMarkerDelegate> delegate;
 
-- (void)markRange:(NSRange)range ofAttributedString:(NSMutableAttributedString*)string withSyntax:(ASKSyntax*)syntax;
+- (void)markRange:(NSRange)range ofAttributedString:(NSMutableAttributedString*)string withSyntax:(ASKSyntax*)syntax userIdentifiers:(NSArray*)userIdentifiers;
 
 @end
 
 @protocol ASKSyntaxMarkerDelegate <NSObject>
 
 - (void)syntaxMarkerIsMarking:(ASKSyntaxMarker*)marker;
-- (NSArray*)syntaxMarker:(ASKSyntaxMarker*)marker userIdentifiersForKeywordMode:(NSString*)name;
 
 @end

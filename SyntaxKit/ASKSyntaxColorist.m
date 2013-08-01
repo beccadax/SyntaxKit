@@ -59,7 +59,8 @@
 	@try {
 		self.coloring = YES;
         
-		[self.syntaxMarker markRange:range ofAttributedString:textStorage withSyntax:syntax];
+		[self.syntaxMarker markRange:range ofAttributedString:textStorage withSyntax:syntax userIdentifiers:
+         [self.delegate syntaxColorist:self userIdentifiersForKeywordComponentName:@"UserIdentifiers"]];
         
         [textStorage enumerateAttribute:ASKSyntaxComponentAttributeName inRange:range options:0 usingBlock:^(ASKSyntaxComponent * component, NSRange range, BOOL *stop) {
             NSDictionary * attributes = defaultTextAttributes;
@@ -111,10 +112,6 @@
 
 - (void)syntaxMarkerIsMarking:(ASKSyntaxMarker *)marker {
     [self.delegate syntaxColoristIsColoring:self];
-}
-
-- (NSArray *)syntaxMarker:(ASKSyntaxMarker *)marker userIdentifiersForKeywordMode:(NSString *)name {
-    return [self.delegate syntaxColorist:self userIdentifiersForKeywordComponentName:name];
 }
 
 @end

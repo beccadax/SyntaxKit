@@ -31,7 +31,7 @@
 
 @implementation ASKSyntaxComponent (Marking)
 
-- (void)marker:(ASKSyntaxMarker *)marker markInString:(NSMutableAttributedString *)string {
+- (void)marker:(ASKSyntaxMarker *)marker markInString:(NSMutableAttributedString *)string withUserIdentifiers:(NSArray *)userIdentifiers {
     @try {
         if([self.type isEqualToString:@"BlockComment"]) {
             [self marker:marker markCommentsInString:string];
@@ -46,10 +46,7 @@
             [self marker:marker markTagInString:string];
         }
         else if([self.type isEqualToString:@"Keywords"]) {
-            NSArray* identifiers = self.keywords;
-            if(identifiers == nil) {
-                identifiers = [marker.delegate syntaxMarker:marker userIdentifiersForKeywordMode:self.name];
-            }
+            NSArray* identifiers = self.keywords ?: userIdentifiers;
             
             for(NSString * identifier in identifiers) {
                 [self marker:marker markIdentifier:identifier inString:string];

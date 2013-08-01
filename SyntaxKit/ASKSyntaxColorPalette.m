@@ -10,12 +10,6 @@
 #import "ASKSyntaxComponent.h"
 #import "NSArray+Color.h"
 
-@interface ASKSyntaxColorPalette ()
-
-@property (strong) NSDictionary * plist;
-
-@end
-
 @implementation ASKSyntaxColorPalette
 
 + (instancetype)standardColorPalette {
@@ -23,17 +17,25 @@
     static dispatch_once_t once;
     
     dispatch_once(&once, ^{
-        singleton = [[self alloc] initWithURL:[[NSBundle bundleForClass:self] URLForResource:@"SyntaxColorDefaults" withExtension:@"plist"]];
+        singleton = [[self alloc] initWithDefinitionURL:[[NSBundle bundleForClass:self] URLForResource:@"SyntaxColorDefaults" withExtension:@"plist"]];
     });
     
     return singleton;
 }
 
-- (id)initWithURL:(NSURL *)URL {
+- (id)initWithDefinition:(NSDictionary *)definition {
+    if(!definition) {
+        return nil;
+    }
+    
     if((self = [super init])) {
-        _plist = [NSDictionary dictionaryWithContentsOfURL:URL];
+        _definition = definition;
     }
     return self;
+}
+
+- (id)initWithDefinitionURL:(NSURL *)URL {
+    return [self initWithDefinition:[NSDictionary dictionaryWithContentsOfURL:URL]];
 }
 
 - (NSString*)keyForSyntaxComponent:(ASKSyntaxComponent*)component {
@@ -42,7 +44,7 @@
 
 - (NSColor *)colorForSyntaxComponent:(ASKSyntaxComponent *)component {
     NSString * key = [self keyForSyntaxComponent:component];
-    NSArray * colorParts = self.plist[key];
+    NSArray * colorParts = self.definition[key];
     
     if(colorParts) {
         return colorParts.colorValue;

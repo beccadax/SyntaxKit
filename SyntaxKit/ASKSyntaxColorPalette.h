@@ -14,7 +14,10 @@
 
 + (instancetype)standardColorPalette;
 
-- (id)initWithURL:(NSURL*)URL;
+- (id)initWithDefinition:(NSDictionary*)definition;
+- (id)initWithDefinitionURL:(NSURL*)URL;
+
+@property (readonly) NSDictionary * definition;
 
 - (NSColor*)colorForSyntaxComponent:(ASKSyntaxComponent*)component;
 

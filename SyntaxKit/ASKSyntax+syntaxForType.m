@@ -7,11 +7,16 @@
 //
 
 #import "ASKSyntax+syntaxForType.h"
+#import <ArchDirectoryObserver/ArchDirectoryObserver.h>
 
 NSString * const ASKSyntaxWillInvalidateSyntaxesNotification = @"ASKSyntaxWillInvalidateSyntaxes";
 NSString * const ASKSyntaxDidInvalidateSyntaxesNotification = @"ASKSyntaxDidInvalidateSyntaxes";
 
 static NSMutableDictionary * Syntaxes = nil;
+
+@interface ASKUserSyntaxDirectoryObserver : NSObject <ArchDirectoryObserver>
+
+@end
 
 @implementation ASKSyntax (syntaxForType)
 
@@ -24,7 +29,6 @@ static NSMutableDictionary * Syntaxes = nil;
 + (NSURL *)userSyntaxesURL {
     NSURL * appSupportURL = [[NSFileManager new] URLForDirectory:NSApplicationSupportDirectory inDomain:NSUserDomainMask appropriateForURL:nil create:YES error:NULL];
     return [appSupportURL URLByAppendingPathComponent:@"Syntax Definitions"];
-    
 }
 
 + (NSURL *)mainBundleSyntaxesURL {
@@ -76,6 +80,13 @@ static NSMutableDictionary * Syntaxes = nil;
 
 + (instancetype)syntaxForType:(NSString*)type {
     if(!Syntaxes) {
+        static ASKUserSyntaxDirectoryObserver * observer;
+        static dispatch_once_t once;
+        
+        dispatch_once(&once, ^{
+            observer = [ASKUserSyntaxDirectoryObserver new];
+        });
+        
         Syntaxes = [NSMutableDictionary new];
         [self loadSyntaxesFromURL:[self userSyntaxesURL]];
         [self loadSyntaxesFromURL:[self mainBundleSyntaxesURL]];
@@ -83,6 +94,39 @@ static NSMutableDictionary * Syntaxes = nil;
     }
     
     return Syntaxes[type];
+}
+
+@end
+
+@implementation ASKUserSyntaxDirectoryObserver
+
+- (id)init {
+    if((self = [super init])) {
+        [[ASKSyntax userSyntaxesURL] addDirectoryObserver:self options:ArchDirectoryObserverResponsive resumeToken:nil];
+    }
+    return self;
+}
+
+- (void)dealloc {
+    [[ASKSyntax userSyntaxesURL] removeDirectoryObserver:self];
+}
+
+- (void)observedDirectory:(NSURL *)observedURL ancestorAtURLDidChange:(NSURL *)changedURL historical:(BOOL)historical resumeToken:(ArchDirectoryObservationResumeToken)resumeToken {
+    if(!historical) {
+        [ASKSyntax invalidateSyntaxes];
+    }
+}
+
+- (void)observedDirectory:(NSURL *)observedURL childrenAtURLDidChange:(NSURL *)changedURL historical:(BOOL)historical resumeToken:(ArchDirectoryObservationResumeToken)resumeToken {
+    if(!historical) {
+        [ASKSyntax invalidateSyntaxes];
+    }
+}
+
+- (void)observedDirectory:(NSURL *)observedURL descendantsAtURLDidChange:(NSURL *)changedURL reason:(ArchDirectoryObserverDescendantReason)reason historical:(BOOL)historical resumeToken:(ArchDirectoryObservationResumeToken)resumeToken {
+    if(!historical) {
+        [ASKSyntax invalidateSyntaxes];
+    }
 }
 
 @end

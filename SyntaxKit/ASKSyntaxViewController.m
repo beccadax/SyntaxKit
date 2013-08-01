@@ -808,6 +808,8 @@ static void * const KVO = (void*)&KVO;
     
     if(self.syntax) {
         self.syntaxColorist.colorPalette = self.colorPalette;
+        self.syntaxColorist.userIdentifiers = self.userIdentifiers;
+        
         [self.syntaxColorist colorRange:range ofTextStorage:self.view.textStorage withSyntax:self.syntax defaultAttributes:self.defaultTextAttributes];
     }
     else {
@@ -827,16 +829,6 @@ static void * const KVO = (void*)&KVO;
     if([self.delegate respondsToSelector:@selector(syntaxViewController:syntaxDidColor:)]) {
         [self.delegate syntaxViewController:self syntaxDidColor:self.syntax];
     }
-}
-
-- (NSArray *)syntaxColorist:(ASKSyntaxColorist *)syntaxColorist userIdentifiersForKeywordComponentName:(NSString *)inModeName {
-    if([inModeName isEqualToString:@"UserIdentifiers"]) {
-        return self.userIdentifiers;
-    }
-    
-    NSLog(@"Unknown component name in -syntax:userIdentifiersForKeywordComponentName: %@", inModeName);
-    
-    return nil;
 }
 
 - (NSDictionary *)syntaxColorist:(ASKSyntaxColorist *)syntaxColorist textAttributesForSyntaxComponent:(ASKSyntaxComponent *)component color:(NSColor *)color {

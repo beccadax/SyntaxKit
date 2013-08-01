@@ -37,6 +37,7 @@
 
 @property (weak) id <ASKSyntaxColoristDelegate> delegate;
 @property (strong) ASKSyntaxColorPalette * colorPalette;
+@property (strong) NSArray * userIdentifiers;
 
 @property (assign,getter = isColoring) BOOL coloring;
 
@@ -49,7 +50,6 @@
 - (void)syntaxColoristWillColor:(ASKSyntaxColorist*)syntaxColorist;
 - (void)syntaxColoristDidColor:(ASKSyntaxColorist*)syntaxColorist;
 
-- (NSArray*)syntaxColorist:(ASKSyntaxColorist*)syntaxColorist userIdentifiersForKeywordComponentName:(NSString*)inModeName;
 - (NSDictionary*)syntaxColorist:(ASKSyntaxColorist*)syntaxColorist textAttributesForSyntaxComponent:(ASKSyntaxComponent*)component color:(NSColor*)color;
 
 @end

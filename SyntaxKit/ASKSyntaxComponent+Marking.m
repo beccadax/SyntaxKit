@@ -57,8 +57,8 @@
             }
             if( identifiers )
             {
-                for( NSString * vCurrIdent in identifiers ) {
-                    [self marker:marker markIdentifier:vCurrIdent inString: string];
+                for( NSString * identifier in identifiers ) {
+                    [self marker:marker markIdentifier:identifier inString: string];
                 }
             }
         }

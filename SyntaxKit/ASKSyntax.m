@@ -20,13 +20,15 @@ NSString * const ASKSyntaxComponentAttributeName = @"ASKSyntaxMode";
 - (id)initWithDefinition:(NSDictionary *)definition {
     if((self = [super init])) {
         _oneLineCommentPrefix = definition[@"OneLineCommentPrefix"];
-        _fileNameSuffixes = definition[@"FileNameSuffixes"];
         
         NSMutableArray * components = [NSMutableArray new];
         for(NSDictionary * def in definition[@"Components"]) {
             [components addObject:[[ASKSyntaxComponent alloc] initWithDefinition:def]];
         }
         _components = components;
+        
+        _preferredUTIs = [[NSSet alloc] initWithArray:definition[@"PreferredUTIs"]];
+        _compatibleUTIs = [[NSSet alloc] initWithArray:definition[@"CompatibleUTIs"]];
         
         _marker = [ASKSyntaxMarker new];
         _marker.syntax = self;

@@ -13,7 +13,9 @@ extern NSString * const ASKSyntaxDidInvalidateSyntaxesNotification;
 
 @interface ASKSyntax (syntaxForType)
 
-+ (void)invalidateSyntaxes;
 + (instancetype)syntaxForType:(NSString*)type;
+
++ (void)invalidateSyntaxes;
++ (NSURL *)userSyntaxesURL;
 
 @end

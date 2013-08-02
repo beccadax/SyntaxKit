@@ -29,6 +29,32 @@ Usage
 7. Load source code into the text view, either by setting the contents of its text storage or by binding the NSTextView.
 8. If desired, set the Syntax View Controller's delegate. The Syntax View Controller will set itself to be the NSTextView's delegate, but it will pass all NSTextViewDelegate messages through to its own delegate. It also implements its own delegate methods in ASKSyntaxViewControllerDelegate.
 
+Syntaxes
+-------
+
+SyntaxKit's `ASKSyntax` object represents a particular set of syntax highlighting rules. Each syntax is represented by a property list file and contains several fields:
+
+* Components: An array of rules to be applied.
+* OneLineCommentPrefix: A string that can be added to or removed from a line to comment it out. Used by `-[ASKSyntaxViewController toggleCommentForSelection:]`.
+* PreferredUTIs: An array of UTIs for file types this syntax is intended to handle. For example, an Objective-C syntax would specify public.objective-c-source as a preferred UTI.
+* CompatibleUTIs: An array of UTIs for file types this syntax can also handle, though perhaps not completely accurately. For example, and Objective-C syntax might specify public.c-source as a compatible UTI; Objective-C is very similar to C and it would be better than nothing, but a syntax specifically intended for C would be a better choice if available.
+
+Syntaxes are stored in a folder called "Syntax Definitions". SyntaxKit will look for such a folder in three places:
+
+1. ~/Library/Application Support (within the sandbox for a sandboxed application)
+2. The application bundle's Contents/Resources folder.
+3. The SyntaxKit framework's Contents/Resources folder.
+
+SyntaxKit will load all of the syntaxes in all of these folders. You can use the `+[ASKSyntax syntaxForType:]` method to fetch a syntax for a given UTI. `+syntaxForType:` will always return a preferred UTI over a compatible UTI. If there's a tie, it will return a syntax from a folder higher in the list above instead of one lower in the list. If there's still a tie, the syntax loaded first will win. Since this is nondeterministic, pay attention to the syntaxes shipped with your app to ensure they don't conflict.
+
+SyntaxKit currently ships with three syntaxes:
+
+* "CSS 1", which includes `org.w3.cascading-style-sheets` as a preferred UTI.
+* "HTML", which includes `public.html` as a preferred UTI and `public.xml` as a compatible UTI.
+* "Objective C", which includes `public.objective-c-source`, `public.objective-c-plus-​plus-source`, and `public.c-header` as preferred UTIs and `public.c-source`, `public.c-plus-plus-source`, and `public.c-plus-plus-header` as compatible UTIs.
+
+I would be thrilled to accept pull requests adding more syntaxes.
+
 To Do
 -----
 
@@ -36,9 +62,7 @@ The current version of SyntaxKit is basically functional, and is used in [Ingist
 
 * There are some rendering glitches in ASKLineNumberView, usually brought out by scrolling.
 * -[ASKSyntaxViewController indentSelection:] and -[ASKSyntaxViewController unindentSelection:] do not fully support ASKSyntaxViewController's indentation-controlling properties.
-* ASKSyntax(syntaxForType) does not have any mechanism for loading syntaxes shipped in an app or in a user directory, and the mapping between UTIs and syntaxes is kind of hacky.
 * I might rework the syntax marking to base it on regexes.
-* SyntaxKit desperately needs more syntaxes. Currently it only supports HTML, CSS, and Objective-C; it uses the Objective-C syntax highlighting for other C variants.
 * While the ASKSyntaxColorPalette object now encapsulates mapping syntax components to colors, there's currently no mechanism to handle editing color palettes.
 * Documentation is generally either nonexistent or out of date.
 

@@ -21,7 +21,7 @@
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string>0.37.4</string>
+	<string>0.37.9</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>Copyright © 2013 Architechies. All rights reserved.</string>
 	<key>NSPrincipalClass</key>
@@ -48,6 +48,23 @@
 				<key>public.mime-type</key>
 				<array>
 					<string>text/css</string>
+				</array>
+			</dict>
+		</dict>
+		<dict>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>com.apple.property-list</string>
+			</array>
+			<key>UTTypeDescription</key>
+			<string>Syntax Definition</string>
+			<key>UTTypeIdentifier</key>
+			<string>com.architechies.frameworks.SyntaxKit.syntaxDefinition</string>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>syntaxDefinition</string>
 				</array>
 			</dict>
 		</dict>

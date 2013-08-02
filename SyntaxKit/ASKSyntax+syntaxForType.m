@@ -44,14 +44,14 @@ static NSMutableDictionary * Syntaxes = nil;
         return;
     }
     
-    NSDirectoryEnumerator * contents = [[NSFileManager new] enumeratorAtURL:URL includingPropertiesForKeys:@[ NSURLTypeIdentifierKey ] options:NSDirectoryEnumerationSkipsHiddenFiles errorHandler:NULL];
+    NSDirectoryEnumerator * contents = [[NSFileManager new] enumeratorAtURL:URL includingPropertiesForKeys:@[ ] options:NSDirectoryEnumerationSkipsHiddenFiles errorHandler:NULL];
     
     for(NSURL * syntaxURL in contents) {
         NSString * type;
         if(![syntaxURL getResourceValue:&type forKey:NSURLTypeIdentifierKey error:NULL]) {
             continue;
         }
-        if(!UTTypeConformsTo((__bridge CFStringRef)type, CFSTR("com.apple.property-list"))) {
+        if(!UTTypeConformsTo((__bridge CFStringRef)type, CFSTR("com.architechies.frameworks.SyntaxKit.syntaxDefinition"))) {
             continue;
         }
         
@@ -85,6 +85,8 @@ static NSMutableDictionary * Syntaxes = nil;
         
         dispatch_once(&once, ^{
             observer = [ASKUserSyntaxDirectoryObserver new];
+            
+            NSAssert(UTTypeConformsTo(CFSTR("com.architechies.frameworks.SyntaxKit.syntaxDefinition"), CFSTR("com.apple.property-list")), @"The syntaxDefinition UTI hasn't been registered! Have you copied SyntaxKit-Info.plist's UTExportedTypeDeclarations to your app?");
         });
         
         Syntaxes = [NSMutableDictionary new];

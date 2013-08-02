@@ -15,6 +15,7 @@ Usage
 ----
 
 1. In your nib file, drag an `NSTextView` into your window.
+1. Open SyntaxKit-Info.plist and find the "Exported Type UTIs" (`UTExportedTypeDeclarations`) key. Copy the two entries into the "Imported Type UTIs" (`UTImportedTypeDeclarations`) key of your app's Info.plist. (Sadly, frameworks like SyntaxKit can't declare UTIs.)
 2. Drag an Object into the "Objects" section of the Interface Builder dock and set its class to `ASKSyntaxViewController`.
 3. Connect your Syntax View Controller's `view` outlet to your `NSTextView`.
 4. Add an outlet to your `NSWindowController` or `NSDocument` subclass of type ASKSyntaxViewController and connect it to your nib's Syntax View Controller.

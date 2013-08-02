@@ -9,31 +9,25 @@ SyntaxKit is a Cocoa framework with the following features:
 
 The syntax highlighting and code editing features are based on [UKSyntaxColoredTextViewController][uksyntax], and the line numbering is based on [NoodleLineNumberView][noodleline]. However, both of these have been extensively modified, and are no longer fully compatible with the original versions.
 
+SyntaxKit works with an ordinary `NSTextView`. It is completely compatible with the Cocoa Text System and doesn't keep you from customizing text handling yourself.
+
 SyntaxKit was originally written for [Ingist][ingist], a gist creation tool. If you like SyntaxKit, please check out Ingist—you might find it handy.
 
 Usage
 ----
 
-1. In your nib file, drag an `NSTextView` into your window.
 1. Open SyntaxKit-Info.plist and find the "Exported Type UTIs" (`UTExportedTypeDeclarations`) key. Copy the two entries into the "Imported Type UTIs" (`UTImportedTypeDeclarations`) key of your app's Info.plist. (Sadly, frameworks like SyntaxKit can't declare UTIs.)
 2. Drag an Object into the "Objects" section of the Interface Builder dock and set its class to `ASKSyntaxViewController`.
-3. Connect your Syntax View Controller's `view` outlet to your `NSTextView`.
+3. Drag an `NSTextView` into your window and connect your Syntax View Controller's `view` outlet to it.
 4. Add an outlet to your `NSWindowController` or `NSDocument` subclass of type ASKSyntaxViewController and connect it to your nib's Syntax View Controller.
-5. In code, you can set some or all of the following on the Syntax View Controller:
-    a. Set the `syntax` property to an `ASKSyntax` object to enable syntax highlighting.
-    b. Set the `maintainIndentation` property to control auto-indentation.
-    c. Set the `indentsWithSpaces` property to determine whether pressing the Tab key inserts a tab character or several space characters.
-    d. Set the `tabDepth` property to determine how many spaces deep a tab character should indent your code, and how many spaces should be inserted when you hit Tab if `indentsWithSpaces` is set.
-    e. Set the `wrapsLines` property to decide whether or not lines should be wrapped. If they are wrapped, continued lines will be indented four spaces deeper than the first line.
-    f. Set the `showsLineNumbers` property to determine if a line number gutter will be shown alongside your text view.
-6. Optionally, hook up the various ASKSyntaxViewController actions to menu items. This may require you to implement `-supplementalTargetForAction:sender:` in your `NSWindowController` to route these methods to it. These actions are compatible with Cocoa Bindings, so you can use `-bind:toObject:withKeyPath:options:` to bind the `maintainIndentation`, `indentsWithSpaces`, `tabDepth`, `wrapsLines`, and `showsLineNumbers` properties.
-7. Load source code into the text view, either by setting the contents of its text storage or by binding the NSTextView.
-8. If desired, set the Syntax View Controller's delegate. The Syntax View Controller will set itself to be the NSTextView's delegate, but it will pass all NSTextViewDelegate messages through to its own delegate. It also implements its own delegate methods in ASKSyntaxViewControllerDelegate.
+5. In code, set the `syntax` property to an `ASKSyntax` object to enable syntax highlighting. (There are a bunch of other useful properties on `ASKSyntaxViewController` that you can set as well—take a look at the header. There are even actions that modify these properties in a Cocoa Bindings-friendly fashion; you'll just need to bind them wtih `-bind:toObject:withKeyPath:options:`.)
+6. Load source code into the text view, either by setting the contents of its text storage or by binding the NSTextView.
+7. If desired, set the Syntax View Controller's delegate. The Syntax View Controller will set itself to be the NSTextView's delegate, but it will pass all NSTextViewDelegate messages through to its own delegate. It also implements its own delegate methods in ASKSyntaxViewControllerDelegate.
 
 Syntaxes
 -------
 
-SyntaxKit's `ASKSyntax` object represents a particular set of syntax highlighting rules. Each syntax is represented by a property list file and contains several fields:
+SyntaxKit's `ASKSyntax` object represents a particular set of syntax highlighting rules. Each syntax is represented by a property list file with a `.syntaxDefinition` extension and contains several fields:
 
 * Components: An array of rules to be applied.
 * OneLineCommentPrefix: A string that can be added to or removed from a line to comment it out. Used by `-[ASKSyntaxViewController toggleCommentForSelection:]`.

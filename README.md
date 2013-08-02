@@ -32,7 +32,7 @@ SyntaxKit's `ASKSyntax` object represents a particular set of syntax highlightin
 * Components: An array of rules to be applied.
 * OneLineCommentPrefix: A string that can be added to or removed from a line to comment it out. Used by `-[ASKSyntaxViewController toggleCommentForSelection:]`.
 * PreferredUTIs: An array of UTIs for file types this syntax is intended to handle. For example, an Objective-C syntax would specify public.objective-c-source as a preferred UTI.
-* CompatibleUTIs: An array of UTIs for file types this syntax can also handle, though perhaps not completely accurately. For example, and Objective-C syntax might specify public.c-source as a compatible UTI; Objective-C is very similar to C and it would be better than nothing, but a syntax specifically intended for C would be a better choice if available.
+* CompatibleUTIs: An array of UTIs for file types this syntax can also handle, though perhaps not completely accurately. For example, an Objective-C syntax might specify public.c-source as a compatible UTI; Objective-C is very similar to C and it would be better than nothing, but a syntax specifically intended for C would be a better choice if available.
 
 Syntaxes are stored in a folder called "Syntax Definitions". SyntaxKit will look for such a folder in three places:
 

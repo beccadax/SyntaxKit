@@ -49,7 +49,7 @@ SyntaxKit will load all of the syntaxes in all of these folders. You can use the
 
 SyntaxKit currently ships with three syntaxes:
 
-* "CSS 1", which includes `org.w3.cascading-style-sheets` as a preferred UTI.
+* "CSS 1", which includes `org.w3.cascading-style-sheet` as a preferred UTI. (Since there is no system-wide UTI for stylesheets, SyntaxKit declares this one.)
 * "HTML", which includes `public.html` as a preferred UTI and `public.xml` as a compatible UTI.
 * "Objective C", which includes `public.objective-c-source`, `public.objective-c-plus-​plus-source`, and `public.c-header` as preferred UTIs and `public.c-source`, `public.c-plus-plus-source`, and `public.c-plus-plus-header` as compatible UTIs.
 

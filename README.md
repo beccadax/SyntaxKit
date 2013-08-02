@@ -20,7 +20,7 @@ Usage
 2. Drag an Object into the "Objects" section of the Interface Builder dock and set its class to `ASKSyntaxViewController`.
 3. Drag an `NSTextView` into your window and connect your Syntax View Controller's `view` outlet to it.
 4. Add an outlet to your `NSWindowController` or `NSDocument` subclass of type ASKSyntaxViewController and connect it to your nib's Syntax View Controller.
-5. In code, set the `syntax` property to an `ASKSyntax` object to enable syntax highlighting. (There are a bunch of other useful properties on `ASKSyntaxViewController` that you can set as well—take a look at the header. There are even actions that modify these properties in a Cocoa Bindings-friendly fashion; you'll just need to bind them wtih `-bind:toObject:withKeyPath:options:`.)
+5. In code, set the `syntax` property to an `ASKSyntax` object to enable syntax highlighting. (There are a bunch of other useful properties on `ASKSyntaxViewController` that you can set as well—take a look at the header. There are even actions that modify these properties in a Cocoa Bindings-friendly fashion; you'll just need to bind them with `-bind:toObject:withKeyPath:options:`.)
 6. Load source code into the text view, either by setting the contents of its text storage or by binding the NSTextView.
 7. If desired, set the Syntax View Controller's delegate. The Syntax View Controller will set itself to be the NSTextView's delegate, but it will pass all NSTextViewDelegate messages through to its own delegate. It also implements its own delegate methods in ASKSyntaxViewControllerDelegate.
 

@@ -47,6 +47,8 @@ Syntaxes are stored in a folder called "Syntax Definitions". SyntaxKit will look
 
 SyntaxKit will load all of the syntaxes in all of these folders. You can use the `+[ASKSyntax syntaxForType:]` method to fetch a syntax for a given UTI. `+syntaxForType:` will always return a preferred UTI over a compatible UTI. If there's a tie, it will return a syntax from a folder higher in the list above instead of one lower in the list. If there's still a tie, the syntax loaded first will win. Since this is nondeterministic, pay attention to the syntaxes shipped with your app to ensure they don't conflict.
 
+SyntaxKit watches the user-accessible Syntax Definitions folder for changes, and if it sees one, it invalidates the list of syntaxes. You should observe `ASKSyntaxWillInvalidateSyntaxesNotification` and `ASKSyntaxDidInvalidateSyntaxesNotification` to find out when this happens and possibly re-assess which syntax you should use.
+
 SyntaxKit currently ships with three syntaxes:
 
 * "CSS 1", which includes `org.w3.cascading-style-sheet` as a preferred UTI. (Since there is no system-wide UTI for stylesheets, SyntaxKit declares this one.)

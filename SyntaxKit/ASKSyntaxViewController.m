@@ -443,6 +443,12 @@ static void * const KVO = (void*)&KVO;
     return selRange;
 }
 
+- (void)insertIndentationIntoString:(NSMutableString*)str atIndex:(NSUInteger)i adjustingRange:(NSRangePointer)range {
+    NSString * indent = [self indentation];
+    [str insertString:indent atIndex:i + 1];
+    range->length += indent.length;
+}
+
 - (IBAction)indentSelection:(id)sender {
 	[self withUndo:^{
         NSRange selRange = self.view.selectedRange, nuSelRange = selRange;
@@ -453,8 +459,7 @@ static void * const KVO = (void*)&KVO;
         
         for(NSUInteger i = NSMaxRange(selRange) - 1; i >= selRange.location; i--) {
             if([self newlineAtIndex:i ofString:str]) {
-                [str insertString:[self indentation] atIndex:i + 1];
-                nuSelRange.length++;
+                [self insertIndentationIntoString:str atIndex:i + 1 adjustingRange:&nuSelRange];
             }
             
             if(i == 0) {
@@ -462,11 +467,26 @@ static void * const KVO = (void*)&KVO;
             }
         }
         
-        [str insertString:[self indentation] atIndex:nuSelRange.location];
-        nuSelRange.length++;
+        [self insertIndentationIntoString:str atIndex:nuSelRange.location adjustingRange:&nuSelRange];
         
         self.view.selectedRange = nuSelRange;
     }];
+}
+
+- (void)removeIndentationFromString:(NSMutableString*)str atIndex:(NSUInteger)i upToIndex:(NSUInteger)lastIndex adjustingRange:(NSRangePointer)range {
+    if([str characterAtIndex:i + 1] == '\t') {
+        [str deleteCharactersInRange:NSMakeRange(i + 1, 1)];
+        range->length--;
+    }
+    else {
+        for(NSUInteger j = i + 1; (j <= (i + 4 /* XXX */)) && (j <= lastIndex); j++) {
+            if([str characterAtIndex:i + 1] != ' ') {
+                break;
+            }
+            [str deleteCharactersInRange:NSMakeRange(i + 1, 1)];
+            range->length--;
+        }
+    }
 }
 
 - (IBAction)unindentSelection:(id)sender {
@@ -484,22 +504,7 @@ static void * const KVO = (void*)&KVO;
 	[self withUndo:^{
         for(NSUInteger i = lastIndex; i >= selRange.location; i--) {
             if([self newlineAtIndex:i ofString:str]) {
-                if((i + 1) <= lastIndex) {
-                    if([str characterAtIndex:i + 1] == '\t') {
-                        [str deleteCharactersInRange:NSMakeRange(i + 1, 1)];
-                        nuSelRange.length--;
-                    }
-                    else {
-                        for(NSUInteger j = i + 1; (j <= (i + 4 /* XXX */)) && (j <= lastIndex); j++ )
-                        {
-                            if([str characterAtIndex:i + 1] != ' ') {
-                                break;
-                            }
-                            [str deleteCharactersInRange:NSMakeRange(i + 1, 1)];
-                            nuSelRange.length--;
-                        }
-                    }
-                }
+                [self removeIndentationFromString:str atIndex:i upToIndex:lastIndex adjustingRange:&nuSelRange];
             }
             
             if(i == 0) {
@@ -507,19 +512,7 @@ static void * const KVO = (void*)&KVO;
             }
         }
         
-        if([str characterAtIndex:nuSelRange.location] == '\t') {
-            [str deleteCharactersInRange:NSMakeRange(nuSelRange.location, 1)];
-            nuSelRange.length--;
-        }
-        else {
-            for(NSUInteger n = 1; (n <= 4 /* XXX */) && (n <= lastIndex); n++) {
-                if([str characterAtIndex: nuSelRange.location] != ' ') {
-                    break;
-                }
-                [str deleteCharactersInRange:NSMakeRange(nuSelRange.location, 1)];
-                nuSelRange.length--;
-            }
-        }
+        [self removeIndentationFromString:str atIndex:nuSelRange.location upToIndex:lastIndex adjustingRange:&nuSelRange];
         
         self.view.selectedRange = nuSelRange;
     }];
@@ -654,7 +647,7 @@ static void * const KVO = (void*)&KVO;
 	[self recolorRange: range];
 }
 
--(void)recolorRange:(NSRange)range {	
+- (void)recolorRange:(NSRange)range {	
     //		The range passed in here is special, and may not include partial
     //		identifiers or the end of a comment. Make sure you include the entire
     //		multi-line comment etc. or it'll lose color.

@@ -199,8 +199,7 @@ static void * const KVO = (void*)&KVO;
 		
 		// Scan up to prev line break:
 		while(i > 0) {
-			unichar theCh = [textStorage.string characterAtIndex:i];
-			if( theCh == '\n' || theCh == '\r' ) {
+			if([self newlineAtIndex:i ofString:textStorage.string]) {
 				break;
             }
 			--i;
@@ -212,8 +211,7 @@ static void * const KVO = (void*)&KVO;
 		i = range.location + range.length;
 		
 		while(i < textStorage.length) {
-			unichar theCh = [textStorage.string characterAtIndex:i];
-			if( theCh == '\n' || theCh == '\r' ) {
+			if([self newlineAtIndex:i ofString:textStorage.string]) {
 				break;
             }
 			++i;
@@ -316,17 +314,16 @@ static void * const KVO = (void*)&KVO;
 	NSRange	 theRange = { 0, 0 };
 	NSString * vString = self.view.string;
 	NSUInteger currLine = 1;
-	NSCharacterSet * vSet = [NSCharacterSet characterSetWithCharactersInString:@"\n\r"];
 	NSUInteger lastBreakOffs = 0;
 	unichar lastBreakChar = 0;
 	
 	for(NSUInteger i = 0; i < vString.length; i++ ) {
-		unichar theCh = [vString characterAtIndex:i];
-		
 		// Skip non-linebreak chars:
-		if(![vSet characterIsMember:theCh]) {
+		if(![self newlineAtIndex:i ofString:vString]) {
 			continue;
         }
+        
+        unichar theCh = [vString characterAtIndex:i];
 		
 		// If this is the LF in a CRLF sequence, only count it as one line break:
 		if(theCh == '\n' && lastBreakOffs == (i - 1) && lastBreakChar == '\r') {
@@ -338,7 +335,7 @@ static void * const KVO = (void*)&KVO;
 		
 		// Calc range and increase line number:
 		theRange.length = i - theRange.location + 1;
-		if( currLine >= lineNum ) {
+		if(currLine >= lineNum) {
 			break;
         }
 		currLine++;
@@ -347,7 +344,7 @@ static void * const KVO = (void*)&KVO;
 		lastBreakChar = theCh;
 	}
 	
-	[self.view scrollRangeToVisible: theRange];
+	[self.view scrollRangeToVisible:theRange];
 	self.view.selectedRange = theRange;
 }
 
@@ -432,10 +429,14 @@ static void * const KVO = (void*)&KVO;
     [self.undoManager endUndoGrouping];
 }
 
+- (BOOL)newlineAtIndex:(NSUInteger)index ofString:(NSString*)string {
+    unichar ch = [string characterAtIndex:index];
+    return ch == '\n' || ch == '\r';
+}
+
 - (NSRange)rangeExcludingTrailingNewline:(NSRange)selRange fromString:(NSString*)str {
     if(selRange.length > 1) {
-        unichar ch = [str characterAtIndex:NSMaxRange(selRange) - 1];
-        if(ch == '\n' || ch == '\r') {
+        if([self newlineAtIndex:NSMaxRange(selRange) - 1 ofString:str]) {
             selRange.length--;
         }
     }
@@ -451,7 +452,7 @@ static void * const KVO = (void*)&KVO;
         selRange = [self rangeExcludingTrailingNewline:selRange fromString:str];
         
         for(NSUInteger i = NSMaxRange(selRange) - 1; i >= selRange.location; i--) {
-            if( [str characterAtIndex:i] == '\n' || [str characterAtIndex:i] == '\r' ) {
+            if([self newlineAtIndex:i ofString:str]) {
                 [str insertString:[self indentation] atIndex:i + 1];
                 nuSelRange.length++;
             }
@@ -482,7 +483,7 @@ static void * const KVO = (void*)&KVO;
 	
 	[self withUndo:^{
         for(NSUInteger i = lastIndex; i >= selRange.location; i--) {
-            if([str characterAtIndex:i] == '\n' || [str characterAtIndex:i] == '\r') {
+            if([self newlineAtIndex:i ofString:str]) {
                 if((i + 1) <= lastIndex) {
                     if([str characterAtIndex:i + 1] == '\t') {
                         [str deleteCharactersInRange:NSMakeRange(i + 1, 1)];
@@ -533,7 +534,7 @@ static void * const KVO = (void*)&KVO;
     }
 	
 	// Are we at the end of a line?
-	if ([str characterAtIndex:selRange.location] == '\n' || [str characterAtIndex:selRange.location] == '\r') {
+	if ([self newlineAtIndex:selRange.location ofString:str]) {
 		if(selRange.location > 0) {
 			selRange.location--;
 			selRange.length++;
@@ -542,7 +543,7 @@ static void * const KVO = (void*)&KVO;
 	
 	// Move the selection to the start of a line
 	while(selRange.location > 0) {
-		if([str characterAtIndex:selRange.location] == '\n' || [str characterAtIndex:selRange.location] == '\r') {
+		if([self newlineAtIndex:selRange.location ofString:str]) {
 			selRange.location++;
 			selRange.length--;
 			break;
@@ -552,7 +553,7 @@ static void * const KVO = (void*)&KVO;
 	}
 
 	// Select up to the end of a line
-	while ((selRange.location + selRange.length) < str.length && !([str characterAtIndex:selRange.location + selRange.length - 1] == '\n' || [str characterAtIndex:selRange.location + selRange.length - 1] == '\r')) {
+	while (NSMaxRange(selRange) < str.length && ![self newlineAtIndex:NSMaxRange(selRange) - 1 ofString:str]) {
 		selRange.length++;
 	}
 	
@@ -583,13 +584,14 @@ static void * const KVO = (void*)&KVO;
         
         for(NSUInteger i = selRange.location + selRange.length - 1; i >= selRange.location; i--) {
             BOOL hitEnd = (i == selRange.location);
-            BOOL hitLineBreak = [str characterAtIndex: i] == '\n' || [str characterAtIndex: i] == '\r';
+            BOOL hitLineBreak = [self newlineAtIndex:i ofString:str];
             
             if(hitLineBreak || hitEnd) {
                 NSUInteger	startOffs = i + 1;
                 if(hitEnd && !hitLineBreak) {
                     startOffs = i;
                 }
+                
                 NSUInteger possibleCommentLength = 0;
                 if(commentPrefixLength <= (selRange.length + selRange.location - startOffs)) {
                     possibleCommentLength = commentPrefixLength;
@@ -652,7 +654,7 @@ static void * const KVO = (void*)&KVO;
 	[self recolorRange: range];
 }
 
--(void)recolorRange: (NSRange)range {	
+-(void)recolorRange:(NSRange)range {	
     //		The range passed in here is special, and may not include partial
     //		identifiers or the end of a comment. Make sure you include the entire
     //		multi-line comment etc. or it'll lose color.

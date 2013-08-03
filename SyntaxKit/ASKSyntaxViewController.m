@@ -60,10 +60,7 @@
 //	Macros:
 // -----------------------------------------------------------------------------
 
-@implementation ASKSyntaxViewController {
-	NSRange								affectedCharRange;
-	NSString*							replacementString;
-}
+@implementation ASKSyntaxViewController
 
 - (void)setSyntax:(ASKSyntax *)syntax {
     _syntax = syntax;
@@ -272,27 +269,27 @@ static void * const KVO = (void*)&KVO;
 //		Perform indentation-maintaining if we're supposed to.
 // -----------------------------------------------------------------------------
 
--(BOOL) textView:(NSTextView *)tv shouldChangeTextInRange:(NSRange)afcr replacementString:(NSString *)rps
+-(BOOL) textView:(NSTextView *)tv shouldChangeTextInRange:(NSRange)affectedCharRange replacementString:(NSString *)replacementString
 {
     if([self.delegate respondsToSelector:@selector(textView:shouldChangeTextInRange:replacementString:)]) {
-        if(![self.delegate textView:tv shouldChangeTextInRange:afcr replacementString:rps]) {
+        if(![self.delegate textView:tv shouldChangeTextInRange:affectedCharRange replacementString:replacementString]) {
             return NO;
         }
     }
     
 	if( self.maintainIndentation )
 	{
-		affectedCharRange = afcr;
-		replacementString = rps;
-		
-		[self performSelector: @selector(didChangeText) withObject: nil afterDelay: 0.0];	// Queue this up on the event loop. If we change the text here, we only confuse the undo stack.
+        dispatch_async(dispatch_get_main_queue(), ^{
+            // Queue this up on the event loop. If we change the text here, we only confuse the undo stack.
+            [self didChangeTextInRange:affectedCharRange replacementString:replacementString];
+        });
 	}
 	
 	return YES;
 }
 
 
--(void)	didChangeText	// This actually does what we want to do in textView:shouldChangeTextInRange:
+-(void)	didChangeTextInRange:(NSRange)affectedCharRange replacementString:(NSString*)replacementString
 {
 	if( self.maintainIndentation && replacementString && ([replacementString isEqualToString:@"\n"]
 		|| [replacementString isEqualToString:@"\r"]) )

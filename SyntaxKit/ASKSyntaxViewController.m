@@ -527,47 +527,11 @@ static void * const KVO = (void*)&KVO;
 }
 
 - (IBAction)toggleCommentForSelection:(id)sender {
-	__block NSRange selRange = self.view.selectedRange;
+    __block NSRange selRange = self.view.selectedRange;
 	NSMutableString * str = self.view.textStorage.mutableString;
-	
-	if(selRange.length == 0) {
-		selRange.length++;
-    }
-	
-	// Are we at the end of a line?
-	if ([self newlineAtIndex:selRange.location ofString:str]) {
-		if(selRange.location > 0) {
-			selRange.location--;
-			selRange.length++;
-		}
-	}
-	
-	// Move the selection to the start of a line
-	while(selRange.location > 0) {
-		if([self newlineAtIndex:selRange.location ofString:str]) {
-			selRange.location++;
-			selRange.length--;
-			break;
-		}
-		selRange.location--;
-		selRange.length++;
-	}
-
-	// Select up to the end of a line
-	while (NSMaxRange(selRange) < str.length && ![self newlineAtIndex:NSMaxRange(selRange) - 1 ofString:str]) {
-		selRange.length++;
-	}
-	
-	if (selRange.length == 0) {
-		return;
-    }
+	__block NSRange lineRange = [str lineRangeForRange:selRange];
 	
 	[self withUndo:^{
-        // Unselect any trailing returns so we don't comment the next line after a full-line selection.
-        selRange = [self rangeExcludingTrailingNewline:selRange fromString:str];
-        
-        NSRange nuSelRange = selRange;
-        
         NSString * commentPrefix = self.syntax.oneLineCommentPrefix;
         if(!commentPrefix || [commentPrefix length] == 0) {
             commentPrefix = @"# ";
@@ -583,8 +547,8 @@ static void * const KVO = (void*)&KVO;
         
         NSUInteger trimmedCommentPrefixLength = trimmedCommentPrefix.length;
         
-        for(NSUInteger i = selRange.location + selRange.length - 1; i >= selRange.location; i--) {
-            BOOL hitEnd = (i == selRange.location);
+        for(NSUInteger i = NSMaxRange(lineRange) - 1 - 1; i >= lineRange.location; i--) {
+            BOOL hitEnd = (i == lineRange.location);
             BOOL hitLineBreak = [self newlineAtIndex:i ofString:str];
             
             if(hitLineBreak || hitEnd) {
@@ -594,10 +558,10 @@ static void * const KVO = (void*)&KVO;
                 }
                 
                 NSUInteger possibleCommentLength = 0;
-                if(commentPrefixLength <= (selRange.length + selRange.location - startOffs)) {
+                if(commentPrefixLength <= (lineRange.length + lineRange.location - startOffs)) {
                     possibleCommentLength = commentPrefixLength;
                 }
-                else if(trimmedCommentPrefixLength <= (selRange.length + selRange.location - startOffs)) {
+                else if(trimmedCommentPrefixLength <= (lineRange.length + lineRange.location - startOffs)) {
                     possibleCommentLength = trimmedCommentPrefixLength;
                 }
                 
@@ -607,11 +571,11 @@ static void * const KVO = (void*)&KVO;
                 if([lineStart hasPrefix:trimmedCommentPrefix]) {
                     NSInteger commentLength = haveWhitespaceToo ? commentPrefixLength : trimmedCommentPrefixLength;
                     [str deleteCharactersInRange: NSMakeRange(startOffs, commentLength)];
-                    nuSelRange.length -= commentLength;
+                    [self adjustRange:&selRange forLengthChange:-commentLength atIndex:startOffs];
                 }
                 else {
                     [str insertString:commentPrefix atIndex:startOffs];
-                    nuSelRange.length += commentPrefixLength;
+                    [self adjustRange:&selRange forLengthChange:commentPrefixLength atIndex:startOffs];
                 }
             }
             
@@ -620,9 +584,9 @@ static void * const KVO = (void*)&KVO;
             }
         }
         
-        self.view.selectedRange = nuSelRange;
+        self.view.selectedRange = selRange;
         
-        [self recolorRange:nuSelRange];
+        [self recolorRange:lineRange];
     }];
 }
 

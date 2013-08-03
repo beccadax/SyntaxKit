@@ -641,7 +641,7 @@ static void * const KVO = (void*)&KVO;
         return YES;
     }
 	else {
-		return [super validateMenuItem:menuItem];
+        return YES;
     }
 }
 

@@ -745,6 +745,18 @@ static void * const KVO = (void*)&KVO;
         [textView insertText:[self indentation]];
         return YES;
     }
+    else if(commandSelector == @selector(deleteBackward:)) {
+        if(textView.selectedRange.location != 0) {
+            NSRange lineRange = [textView.string lineRangeForRange:textView.selectedRange];
+            NSRange leadingWhitespaceRange = [textView.string rangeOfCharacterFromSet:[NSCharacterSet.whitespaceCharacterSet invertedSet] options:0 range:lineRange];
+            leadingWhitespaceRange = NSMakeRange(lineRange.location, leadingWhitespaceRange.location - lineRange.location);
+            
+            if(NSLocationInRange(textView.selectedRange.location - 1, leadingWhitespaceRange)) {
+                [self unindentSelection:textView];
+                return YES;
+            }
+        }
+    }
     return NO;
 }
 

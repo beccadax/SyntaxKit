@@ -621,6 +621,8 @@ static void * const KVO = (void*)&KVO;
         }
         
         self.view.selectedRange = nuSelRange;
+        
+        [self recolorRange:nuSelRange];
     }];
 }
 

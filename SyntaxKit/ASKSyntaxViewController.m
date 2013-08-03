@@ -479,7 +479,7 @@ static void * const KVO = (void*)&KVO;
         range->length--;
     }
     else {
-        for(NSUInteger j = i + 1; (j <= (i + 4 /* XXX */)) && (j <= lastIndex); j++) {
+        for(NSUInteger j = 0; (j < 4 /* XXX */) && (i + j + 1 <= lastIndex); j++) {
             if([str characterAtIndex:i + 1] != ' ') {
                 break;
             }

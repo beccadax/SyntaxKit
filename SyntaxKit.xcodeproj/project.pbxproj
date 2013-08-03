@@ -49,6 +49,9 @@
 		848113D917A0C8E7008C5A6F /* TDBindings.h in Headers */ = {isa = PBXBuildFile; fileRef = 848113D717A0C8E7008C5A6F /* TDBindings.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		848113DA17A0C8E7008C5A6F /* TDBindings.m in Sources */ = {isa = PBXBuildFile; fileRef = 848113D817A0C8E7008C5A6F /* TDBindings.m */; };
 		848113DC17A0C944008C5A6F /* SyntaxKit.h in Headers */ = {isa = PBXBuildFile; fileRef = 8481139617A0C5FE008C5A6F /* SyntaxKit.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		84CB8EED17AA52DF00ACA233 /* ArchDirectoryObserver.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 84CB8EEA17AA52CB00ACA233 /* ArchDirectoryObserver.framework */; };
+		84CB8EEF17AA52F000ACA233 /* ArchDirectoryObserver.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 84CB8EEA17AA52CB00ACA233 /* ArchDirectoryObserver.framework */; };
+		84CB8EF117ACC81300ACA233 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 8421688817A8D798007FAEAB /* README.md */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -59,7 +62,34 @@
 			remoteGlobalIDString = 8481138517A0C5FE008C5A6F;
 			remoteInfo = SourceKit;
 		};
+		84CB8EE917AA52CB00ACA233 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 84CB8EE417AA52CA00ACA233 /* ArchDirectoryObserver.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 848B2AF914F0EFA8003413DC;
+			remoteInfo = ArchDirectoryObserver;
+		};
+		84CB8EEB17AA52CB00ACA233 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 84CB8EE417AA52CA00ACA233 /* ArchDirectoryObserver.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 848B2B1114F0EFA8003413DC;
+			remoteInfo = ArchDirectoryObserverTests;
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		84CB8EEE17AA52E700ACA233 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				84CB8EEF17AA52F000ACA233 /* ArchDirectoryObserver.framework in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		8421688817A8D798007FAEAB /* README.md */ = {isa = PBXFileReference; lastKnownFileType = text; path = README.md; sourceTree = "<group>"; };
@@ -111,6 +141,7 @@
 		848113D417A0C8DC008C5A6F /* ASKTypesetter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ASKTypesetter.m; sourceTree = "<group>"; };
 		848113D717A0C8E7008C5A6F /* TDBindings.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TDBindings.h; sourceTree = "<group>"; };
 		848113D817A0C8E7008C5A6F /* TDBindings.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TDBindings.m; sourceTree = "<group>"; };
+		84CB8EE417AA52CA00ACA233 /* ArchDirectoryObserver.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = ArchDirectoryObserver.xcodeproj; path = ArchDirectoryObserver/ArchDirectoryObserver.xcodeproj; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -118,6 +149,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				84CB8EED17AA52DF00ACA233 /* ArchDirectoryObserver.framework in Frameworks */,
 				8481138A17A0C5FE008C5A6F /* Cocoa.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -154,6 +186,7 @@
 		8481137C17A0C5FE008C5A6F = {
 			isa = PBXGroup;
 			children = (
+				84CB8EE417AA52CA00ACA233 /* ArchDirectoryObserver.xcodeproj */,
 				8421688817A8D798007FAEAB /* README.md */,
 				8481138F17A0C5FE008C5A6F /* SyntaxKit */,
 				848113A417A0C5FE008C5A6F /* SyntaxKitTests */,
@@ -286,6 +319,15 @@
 			name = "Text View";
 			sourceTree = "<group>";
 		};
+		84CB8EE517AA52CA00ACA233 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				84CB8EEA17AA52CB00ACA233 /* ArchDirectoryObserver.framework */,
+				84CB8EEC17AA52CB00ACA233 /* ArchDirectoryObserverTests.octest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
@@ -324,6 +366,7 @@
 				8481138217A0C5FE008C5A6F /* Frameworks */,
 				8481138317A0C5FE008C5A6F /* Headers */,
 				8481138417A0C5FE008C5A6F /* Resources */,
+				84CB8EEE17AA52E700ACA233 /* CopyFiles */,
 			);
 			buildRules = (
 			);
@@ -377,6 +420,12 @@
 			mainGroup = 8481137C17A0C5FE008C5A6F;
 			productRefGroup = 8481138717A0C5FE008C5A6F /* Products */;
 			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = 84CB8EE517AA52CA00ACA233 /* Products */;
+					ProjectRef = 84CB8EE417AA52CA00ACA233 /* ArchDirectoryObserver.xcodeproj */;
+				},
+			);
 			projectRoot = "";
 			targets = (
 				8481138517A0C5FE008C5A6F /* SyntaxKit */,
@@ -384,6 +433,23 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXReferenceProxy section */
+		84CB8EEA17AA52CB00ACA233 /* ArchDirectoryObserver.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = ArchDirectoryObserver.framework;
+			remoteRef = 84CB8EE917AA52CB00ACA233 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		84CB8EEC17AA52CB00ACA233 /* ArchDirectoryObserverTests.octest */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.cfbundle;
+			path = ArchDirectoryObserverTests.octest;
+			remoteRef = 84CB8EEB17AA52CB00ACA233 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+/* End PBXReferenceProxy section */
 
 /* Begin PBXResourcesBuildPhase section */
 		8481138417A0C5FE008C5A6F /* Resources */ = {
@@ -393,6 +459,7 @@
 				8481139417A0C5FE008C5A6F /* InfoPlist.strings in Resources */,
 				846E1EC617A25932002694CF /* Syntax Definitions in Resources */,
 				846E1ECA17A259B2002694CF /* SyntaxColorDefaults.plist in Resources */,
+				84CB8EF117ACC81300ACA233 /* README.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

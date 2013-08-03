@@ -13,38 +13,31 @@ NSString * const ASKSyntaxComponentAttributeName = @"ASKSyntaxMode";
 
 @interface ASKSyntax ()
 
-@property (strong) NSDictionary * definition;
-
 @end
 
 @implementation ASKSyntax
 
 - (id)initWithDefinition:(NSDictionary *)definition {
     if((self = [super init])) {
-        _definition = definition;
+        _oneLineCommentPrefix = definition[@"OneLineCommentPrefix"];
         
         NSMutableArray * components = [NSMutableArray new];
-        for(NSDictionary * def in _definition[@"Components"]) {
+        for(NSDictionary * def in definition[@"Components"]) {
             [components addObject:[[ASKSyntaxComponent alloc] initWithDefinition:def]];
         }
         _components = components;
         
-        self.marker = [ASKSyntaxMarker new];
-        self.marker.syntax = self;
+        _preferredUTIs = [[NSSet alloc] initWithArray:definition[@"PreferredUTIs"]];
+        _compatibleUTIs = [[NSSet alloc] initWithArray:definition[@"CompatibleUTIs"]];
+        
+        _marker = [ASKSyntaxMarker new];
+        _marker.syntax = self;
     }
     return self;
 }
 
 - (id)initWithDefinitionURL:(NSURL *)URL {
     return [self initWithDefinition:[NSDictionary dictionaryWithContentsOfURL:URL]];
-}
-
-- (NSString *)oneLineCommentPrefix {
-    return self.definition[@"OneLineCommentSuffix"];
-}
-
-- (NSArray *)fileNameSuffixes {
-    return self.definition[@"FileNameSuffixes"];
 }
 
 @end

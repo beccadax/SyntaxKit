@@ -22,7 +22,8 @@
 
 @property (readonly) NSArray * components;
 @property (readonly) NSString * oneLineCommentPrefix;
-@property (readonly) NSArray * fileNameSuffixes;
+@property (readonly) NSSet * preferredUTIs;
+@property (readonly) NSSet * compatibleUTIs;
 
 @end
 

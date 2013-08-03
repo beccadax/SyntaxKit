@@ -9,25 +9,48 @@ SyntaxKit is a Cocoa framework with the following features:
 
 The syntax highlighting and code editing features are based on [UKSyntaxColoredTextViewController][uksyntax], and the line numbering is based on [NoodleLineNumberView][noodleline]. However, both of these have been extensively modified, and are no longer fully compatible with the original versions.
 
+SyntaxKit works with an ordinary `NSTextView`. It is completely compatible with the Cocoa Text System and doesn't keep you from customizing text handling yourself.
+
 SyntaxKit was originally written for [Ingist][ingist], a gist creation tool. If you like SyntaxKit, please check out Ingist—you might find it handy.
 
 Usage
 ----
 
-1. In your nib file, drag an `NSTextView` into your window.
+1. Open SyntaxKit-Info.plist and find the "Exported Type UTIs" (`UTExportedTypeDeclarations`) key. Copy the two entries into the "Imported Type UTIs" (`UTImportedTypeDeclarations`) key of your app's Info.plist. (Sadly, frameworks like SyntaxKit can't declare UTIs.)
 2. Drag an Object into the "Objects" section of the Interface Builder dock and set its class to `ASKSyntaxViewController`.
-3. Connect your Syntax View Controller's `view` outlet to your `NSTextView`.
+3. Drag an `NSTextView` into your window and connect your Syntax View Controller's `view` outlet to it.
 4. Add an outlet to your `NSWindowController` or `NSDocument` subclass of type ASKSyntaxViewController and connect it to your nib's Syntax View Controller.
-5. In code, you can set some or all of the following on the Syntax View Controller:
-    a. Set the `syntax` property to an `ASKSyntax` object to enable syntax highlighting.
-    b. Set the `maintainIndentation` property to control auto-indentation.
-    c. Set the `indentsWithSpaces` property to determine whether pressing the Tab key inserts a tab character or several space characters.
-    d. Set the `tabDepth` property to determine how many spaces deep a tab character should indent your code, and how many spaces should be inserted when you hit Tab if `indentsWithSpaces` is set.
-    e. Set the `wrapsLines` property to decide whether or not lines should be wrapped. If they are wrapped, continued lines will be indented four spaces deeper than the first line.
-    f. Set the `showsLineNumbers` property to determine if a line number gutter will be shown alongside your text view.
-6. Optionally, hook up the various ASKSyntaxViewController actions to menu items. This may require you to implement `-supplementalTargetForAction:sender:` in your `NSWindowController` to route these methods to it. These actions are compatible with Cocoa Bindings, so you can use `-bind:toObject:withKeyPath:options:` to bind the `maintainIndentation`, `indentsWithSpaces`, `tabDepth`, `wrapsLines`, and `showsLineNumbers` properties.
-7. Load source code into the text view, either by setting the contents of its text storage or by binding the NSTextView.
-8. If desired, set the Syntax View Controller's delegate. The Syntax View Controller will set itself to be the NSTextView's delegate, but it will pass all NSTextViewDelegate messages through to its own delegate. It also implements its own delegate methods in ASKSyntaxViewControllerDelegate.
+5. In code, set the `syntax` property to an `ASKSyntax` object to enable syntax highlighting. (There are a bunch of other useful properties on `ASKSyntaxViewController` that you can set as well—take a look at the header. There are even actions that modify these properties in a Cocoa Bindings-friendly fashion; you'll just need to bind them with `-bind:toObject:withKeyPath:options:`.)
+6. Load source code into the text view, either by setting the contents of its text storage or by binding the NSTextView.
+7. If desired, set the Syntax View Controller's delegate. The Syntax View Controller will set itself to be the NSTextView's delegate, but it will pass all NSTextViewDelegate messages through to its own delegate. It also implements its own delegate methods in ASKSyntaxViewControllerDelegate.
+
+Syntaxes
+-------
+
+SyntaxKit's `ASKSyntax` object represents a particular set of syntax highlighting rules. Each syntax is represented by a property list file with a `.syntaxDefinition` extension and contains several fields:
+
+* Components: An array of rules to be applied.
+* OneLineCommentPrefix: A string that can be added to or removed from a line to comment it out. Used by `-[ASKSyntaxViewController toggleCommentForSelection:]`.
+* PreferredUTIs: An array of UTIs for file types this syntax is intended to handle. For example, an Objective-C syntax would specify public.objective-c-source as a preferred UTI.
+* CompatibleUTIs: An array of UTIs for file types this syntax can also handle, though perhaps not completely accurately. For example, an Objective-C syntax might specify public.c-source as a compatible UTI; Objective-C is very similar to C and it would be better than nothing, but a syntax specifically intended for C would be a better choice if available.
+
+Syntaxes are stored in a folder called "Syntax Definitions". SyntaxKit will look for such a folder in three places:
+
+1. ~/Library/Application Support (within the sandbox for a sandboxed application)
+2. The application bundle's Contents/Resources folder.
+3. The SyntaxKit framework's Contents/Resources folder.
+
+SyntaxKit will load all of the syntaxes in all of these folders. You can use the `+[ASKSyntax syntaxForType:]` method to fetch a syntax for a given UTI. `+syntaxForType:` will always return a preferred UTI over a compatible UTI. If there's a tie, it will return a syntax from a folder higher in the list above instead of one lower in the list. If there's still a tie, the syntax loaded first will win. Since this is nondeterministic, pay attention to the syntaxes shipped with your app to ensure they don't conflict.
+
+SyntaxKit watches the user-accessible Syntax Definitions folder for changes, and if it sees one, it invalidates the list of syntaxes. You should observe `ASKSyntaxWillInvalidateSyntaxesNotification` and `ASKSyntaxDidInvalidateSyntaxesNotification` to find out when this happens and possibly re-assess which syntax you should use. If you make your own changes to this folder (which you can access through the `+userSyntaxesURL` method), you should call `+invalidateSyntaxes` yourself.
+
+SyntaxKit currently ships with three syntaxes:
+
+* "CSS 1", which includes `org.w3.cascading-style-sheet` as a preferred UTI. (Since there is no system-wide UTI for stylesheets, SyntaxKit declares this one.)
+* "HTML", which includes `public.html` as a preferred UTI and `public.xml` as a compatible UTI.
+* "Objective C", which includes `public.objective-c-source`, `public.objective-c-plus-​plus-source`, and `public.c-header` as preferred UTIs and `public.c-source`, `public.c-plus-plus-source`, and `public.c-plus-plus-header` as compatible UTIs.
+
+I would be thrilled to accept pull requests adding more syntaxes.
 
 To Do
 -----
@@ -36,9 +59,7 @@ The current version of SyntaxKit is basically functional, and is used in [Ingist
 
 * There are some rendering glitches in ASKLineNumberView, usually brought out by scrolling.
 * -[ASKSyntaxViewController indentSelection:] and -[ASKSyntaxViewController unindentSelection:] do not fully support ASKSyntaxViewController's indentation-controlling properties.
-* ASKSyntax(syntaxForType) does not have any mechanism for loading syntaxes shipped in an app or in a user directory, and the mapping between UTIs and syntaxes is kind of hacky.
 * I might rework the syntax marking to base it on regexes.
-* SyntaxKit desperately needs more syntaxes. Currently it only supports HTML, CSS, and Objective-C; it uses the Objective-C syntax highlighting for other C variants.
 * While the ASKSyntaxColorPalette object now encapsulates mapping syntax components to colors, there's currently no mechanism to handle editing color palettes.
 * Documentation is generally either nonexistent or out of date.
 

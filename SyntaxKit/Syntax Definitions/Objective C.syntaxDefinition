@@ -209,11 +209,17 @@
 			<string>BlockComment</string>
 		</dict>
 	</array>
-	<key>FileNameSuffixes</key>
+	<key>PreferredUTIs</key>
 	<array>
-		<string>m</string>
-		<string>mm</string>
-		<string>h</string>
+		<string>public.objective-c-source</string>
+		<string>public.objective-c-plus-​plus-source</string>
+		<string>public.c-header</string>
+	</array>
+	<key>CompatibleUTIs</key>
+	<array>
+		<string>public.c-source</string>
+		<string>public.c-plus-plus-source</string>
+		<string>public.c-plus-plus-header</string>
 	</array>
 </dict>
 </plist>

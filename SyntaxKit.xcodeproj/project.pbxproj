@@ -51,6 +51,7 @@
 		848113DC17A0C944008C5A6F /* SyntaxKit.h in Headers */ = {isa = PBXBuildFile; fileRef = 8481139617A0C5FE008C5A6F /* SyntaxKit.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		84CB8EED17AA52DF00ACA233 /* ArchDirectoryObserver.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 84CB8EEA17AA52CB00ACA233 /* ArchDirectoryObserver.framework */; };
 		84CB8EEF17AA52F000ACA233 /* ArchDirectoryObserver.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 84CB8EEA17AA52CB00ACA233 /* ArchDirectoryObserver.framework */; };
+		84CB8EF117ACC81300ACA233 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 8421688817A8D798007FAEAB /* README.md */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -458,6 +459,7 @@
 				8481139417A0C5FE008C5A6F /* InfoPlist.strings in Resources */,
 				846E1EC617A25932002694CF /* Syntax Definitions in Resources */,
 				846E1ECA17A259B2002694CF /* SyntaxColorDefaults.plist in Resources */,
+				84CB8EF117ACC81300ACA233 /* README.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

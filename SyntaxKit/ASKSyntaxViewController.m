@@ -231,7 +231,6 @@ static void * const KVO = (void*)&KVO;
 	}
 }
 
-
 - (BOOL)textView:(NSTextView *)textView shouldChangeTextInRange:(NSRange)affectedCharRange replacementString:(NSString *)replacementString {
     if([self.delegate respondsToSelector:@selector(textView:shouldChangeTextInRange:replacementString:)]) {
         if(![self.delegate textView:textView shouldChangeTextInRange:affectedCharRange replacementString:replacementString]) {
@@ -422,6 +421,17 @@ static void * const KVO = (void*)&KVO;
 	[self.undoManager enableUndoRegistration];
 }
 
+- (void)withUndo:(dispatch_block_t)block {
+    [self.undoManager beginUndoGrouping];
+    
+	NSString * prevText = [self.view.textStorage.string copy];
+    [[self.undoManager prepareWithInvocationTarget:self] restoreText:prevText];
+    
+    block();
+    
+    [self.undoManager endUndoGrouping];
+}
+
 - (NSRange)rangeExcludingTrailingNewline:(NSRange)selRange fromString:(NSString*)str {
     if(selRange.length > 1) {
         unichar ch = [str characterAtIndex:NSMaxRange(selRange) - 1];
@@ -433,38 +443,33 @@ static void * const KVO = (void*)&KVO;
 }
 
 - (IBAction)indentSelection:(id)sender {
-	[self.undoManager beginUndoGrouping];
-    
-	NSString * prevText = [self.view.textStorage.string copy];
-    [[self.undoManager prepareWithInvocationTarget:self] restoreText:prevText];
-	
-	NSRange selRange = self.view.selectedRange, nuSelRange = selRange;
-	NSMutableString * str = self.view.textStorage.mutableString;
-	
-	// Unselect any trailing returns so we don't indent the next line after a full-line selection.
-    selRange = [self rangeExcludingTrailingNewline:selRange fromString:str];
-	
-	for(NSUInteger i = NSMaxRange(selRange) - 1; i >= selRange.location; i--) {
-		if( [str characterAtIndex:i] == '\n' || [str characterAtIndex:i] == '\r' ) {
-			[str insertString:[self indentation] atIndex:i + 1];
-			nuSelRange.length++;
-		}
-		
-		if(i == 0) {
-			break;
+	[self withUndo:^{
+        NSRange selRange = self.view.selectedRange, nuSelRange = selRange;
+        NSMutableString * str = self.view.textStorage.mutableString;
+        
+        // Unselect any trailing returns so we don't indent the next line after a full-line selection.
+        selRange = [self rangeExcludingTrailingNewline:selRange fromString:str];
+        
+        for(NSUInteger i = NSMaxRange(selRange) - 1; i >= selRange.location; i--) {
+            if( [str characterAtIndex:i] == '\n' || [str characterAtIndex:i] == '\r' ) {
+                [str insertString:[self indentation] atIndex:i + 1];
+                nuSelRange.length++;
+            }
+            
+            if(i == 0) {
+                break;
+            }
         }
-	}
-	
-	[str insertString:[self indentation] atIndex:nuSelRange.location];
-	nuSelRange.length++;
-    
-	self.view.selectedRange = nuSelRange;
-    
-	[self.undoManager endUndoGrouping];
+        
+        [str insertString:[self indentation] atIndex:nuSelRange.location];
+        nuSelRange.length++;
+        
+        self.view.selectedRange = nuSelRange;
+    }];
 }
 
 - (IBAction)unindentSelection:(id)sender {
-	NSRange selRange = self.view.selectedRange, nuSelRange = selRange;
+	__block NSRange selRange = self.view.selectedRange, nuSelRange = selRange;
 	NSUInteger lastIndex = selRange.location + selRange.length - 1;
 	NSMutableString * str = self.view.textStorage.mutableString;
 	
@@ -475,56 +480,52 @@ static void * const KVO = (void*)&KVO;
 		return;
     }
 	
-	[self.undoManager beginUndoGrouping];
-    
-	NSString * prevText = [self.view.textStorage.string copy];
-    [[self.undoManager prepareWithInvocationTarget:self] restoreText:prevText];
-		
-	for(NSUInteger i = lastIndex; i >= selRange.location; i--) {
-		if([str characterAtIndex:i] == '\n' || [str characterAtIndex:i] == '\r') {
-			if((i + 1) <= lastIndex) {
-				if([str characterAtIndex:i + 1] == '\t') {
-					[str deleteCharactersInRange:NSMakeRange(i + 1, 1)];
-					nuSelRange.length--;
-				}
-				else {
-					for(NSUInteger j = i + 1; (j <= (i + 4 /* XXX */)) && (j <= lastIndex); j++ )
-					{
-						if([str characterAtIndex:i + 1] != ' ') {
-							break;
+	[self withUndo:^{
+        for(NSUInteger i = lastIndex; i >= selRange.location; i--) {
+            if([str characterAtIndex:i] == '\n' || [str characterAtIndex:i] == '\r') {
+                if((i + 1) <= lastIndex) {
+                    if([str characterAtIndex:i + 1] == '\t') {
+                        [str deleteCharactersInRange:NSMakeRange(i + 1, 1)];
+                        nuSelRange.length--;
+                    }
+                    else {
+                        for(NSUInteger j = i + 1; (j <= (i + 4 /* XXX */)) && (j <= lastIndex); j++ )
+                        {
+                            if([str characterAtIndex:i + 1] != ' ') {
+                                break;
+                            }
+                            [str deleteCharactersInRange:NSMakeRange(i + 1, 1)];
+                            nuSelRange.length--;
                         }
-						[str deleteCharactersInRange:NSMakeRange(i + 1, 1)];
-						nuSelRange.length--;
-					}
-				}
-			}
-		}
-		
-		if(i == 0) {
-			break;
-        }
-	}
-	
-	if([str characterAtIndex:nuSelRange.location] == '\t') {
-		[str deleteCharactersInRange:NSMakeRange(nuSelRange.location, 1)];
-		nuSelRange.length--;
-	}
-	else {
-		for(NSUInteger n = 1; (n <= 4 /* XXX */) && (n <= lastIndex); n++) {
-			if([str characterAtIndex: nuSelRange.location] != ' ') {
-				break;
+                    }
+                }
             }
-			[str deleteCharactersInRange:NSMakeRange(nuSelRange.location, 1)];
-			nuSelRange.length--;
-		}
-	}
-	
-	self.view.selectedRange = nuSelRange;
-	[self.undoManager endUndoGrouping];
+            
+            if(i == 0) {
+                break;
+            }
+        }
+        
+        if([str characterAtIndex:nuSelRange.location] == '\t') {
+            [str deleteCharactersInRange:NSMakeRange(nuSelRange.location, 1)];
+            nuSelRange.length--;
+        }
+        else {
+            for(NSUInteger n = 1; (n <= 4 /* XXX */) && (n <= lastIndex); n++) {
+                if([str characterAtIndex: nuSelRange.location] != ' ') {
+                    break;
+                }
+                [str deleteCharactersInRange:NSMakeRange(nuSelRange.location, 1)];
+                nuSelRange.length--;
+            }
+        }
+        
+        self.view.selectedRange = nuSelRange;
+    }];
 }
 
 - (IBAction)toggleCommentForSelection:(id)sender {
-	NSRange selRange = self.view.selectedRange;
+	__block NSRange selRange = self.view.selectedRange;
 	NSMutableString * str = self.view.textStorage.mutableString;
 	
 	if(selRange.length == 0) {
@@ -559,69 +560,65 @@ static void * const KVO = (void*)&KVO;
 		return;
     }
 	
-	[self.undoManager beginUndoGrouping];
-    
-	NSString * prevText = [self.view.textStorage.string copy];
-    [[self.undoManager prepareWithInvocationTarget:self] restoreText:prevText];
-	
-	// Unselect any trailing returns so we don't comment the next line after a full-line selection.
-    selRange = [self rangeExcludingTrailingNewline:selRange fromString:str];
-	
-	NSRange nuSelRange = selRange;
-	
-	NSString * commentPrefix = self.syntax.oneLineCommentPrefix;
-	if(!commentPrefix || [commentPrefix length] == 0) {
-		commentPrefix = @"# ";
-    }
-    
-	NSUInteger commentPrefixLength = commentPrefix.length;
-	NSString * trimmedCommentPrefix = [commentPrefix stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
-    
-	if(!trimmedCommentPrefix || trimmedCommentPrefix.length == 0 ) {
-        // Comments apparently *are* whitespace.
-		trimmedCommentPrefix = commentPrefix;
-    }
-    
-	NSUInteger trimmedCommentPrefixLength = trimmedCommentPrefix.length;
-	
-	for(NSUInteger i = selRange.location + selRange.length - 1; i >= selRange.location; i--) {
-		BOOL hitEnd = (i == selRange.location);
-		BOOL hitLineBreak = [str characterAtIndex: i] == '\n' || [str characterAtIndex: i] == '\r';
+	[self withUndo:^{
+        // Unselect any trailing returns so we don't comment the next line after a full-line selection.
+        selRange = [self rangeExcludingTrailingNewline:selRange fromString:str];
         
-		if(hitLineBreak || hitEnd) {
-			NSUInteger	startOffs = i + 1;
-			if(hitEnd && !hitLineBreak) {
-				startOffs = i;
-            }
-			NSUInteger possibleCommentLength = 0;
-			if(commentPrefixLength <= (selRange.length + selRange.location - startOffs)) {
-				possibleCommentLength = commentPrefixLength;
-            }
-			else if(trimmedCommentPrefixLength <= (selRange.length + selRange.location - startOffs)) {
-				possibleCommentLength = trimmedCommentPrefixLength;
-            }
-			
-			NSString	* lineStart = [str substringWithRange: NSMakeRange(startOffs, possibleCommentLength)];
-			BOOL haveWhitespaceToo = [lineStart hasPrefix:commentPrefix];
-            
-			if([lineStart hasPrefix:trimmedCommentPrefix]) {
-				NSInteger commentLength = haveWhitespaceToo ? commentPrefixLength : trimmedCommentPrefixLength;
-				[str deleteCharactersInRange: NSMakeRange(startOffs, commentLength)];
-				nuSelRange.length -= commentLength;
-			}
-			else {
-				[str insertString:commentPrefix atIndex:startOffs];
-				nuSelRange.length += commentPrefixLength;
-			}
-		}
-		
-		if(i == 0) {
-			break;
+        NSRange nuSelRange = selRange;
+        
+        NSString * commentPrefix = self.syntax.oneLineCommentPrefix;
+        if(!commentPrefix || [commentPrefix length] == 0) {
+            commentPrefix = @"# ";
         }
-	}
-	
-	self.view.selectedRange = nuSelRange;
-	[self.undoManager endUndoGrouping];
+        
+        NSUInteger commentPrefixLength = commentPrefix.length;
+        NSString * trimmedCommentPrefix = [commentPrefix stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+        
+        if(!trimmedCommentPrefix || trimmedCommentPrefix.length == 0 ) {
+            // Comments apparently *are* whitespace.
+            trimmedCommentPrefix = commentPrefix;
+        }
+        
+        NSUInteger trimmedCommentPrefixLength = trimmedCommentPrefix.length;
+        
+        for(NSUInteger i = selRange.location + selRange.length - 1; i >= selRange.location; i--) {
+            BOOL hitEnd = (i == selRange.location);
+            BOOL hitLineBreak = [str characterAtIndex: i] == '\n' || [str characterAtIndex: i] == '\r';
+            
+            if(hitLineBreak || hitEnd) {
+                NSUInteger	startOffs = i + 1;
+                if(hitEnd && !hitLineBreak) {
+                    startOffs = i;
+                }
+                NSUInteger possibleCommentLength = 0;
+                if(commentPrefixLength <= (selRange.length + selRange.location - startOffs)) {
+                    possibleCommentLength = commentPrefixLength;
+                }
+                else if(trimmedCommentPrefixLength <= (selRange.length + selRange.location - startOffs)) {
+                    possibleCommentLength = trimmedCommentPrefixLength;
+                }
+                
+                NSString	* lineStart = [str substringWithRange: NSMakeRange(startOffs, possibleCommentLength)];
+                BOOL haveWhitespaceToo = [lineStart hasPrefix:commentPrefix];
+                
+                if([lineStart hasPrefix:trimmedCommentPrefix]) {
+                    NSInteger commentLength = haveWhitespaceToo ? commentPrefixLength : trimmedCommentPrefixLength;
+                    [str deleteCharactersInRange: NSMakeRange(startOffs, commentLength)];
+                    nuSelRange.length -= commentLength;
+                }
+                else {
+                    [str insertString:commentPrefix atIndex:startOffs];
+                    nuSelRange.length += commentPrefixLength;
+                }
+            }
+            
+            if(i == 0) {
+                break;
+            }
+        }
+        
+        self.view.selectedRange = nuSelRange;
+    }];
 }
 
 - (BOOL)validateMenuItem:(NSMenuItem*)menuItem {

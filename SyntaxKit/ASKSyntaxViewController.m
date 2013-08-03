@@ -572,10 +572,12 @@ static void * const KVO = (void*)&KVO;
                     NSInteger commentLength = haveWhitespaceToo ? commentPrefixLength : trimmedCommentPrefixLength;
                     [str deleteCharactersInRange: NSMakeRange(startOffs, commentLength)];
                     [self adjustRange:&selRange forLengthChange:-commentLength atIndex:startOffs];
+                    [self adjustRange:&lineRange forLengthChange:-commentLength atIndex:startOffs];
                 }
                 else {
                     [str insertString:commentPrefix atIndex:startOffs];
                     [self adjustRange:&selRange forLengthChange:commentPrefixLength atIndex:startOffs];
+                    [self adjustRange:&lineRange forLengthChange:commentPrefixLength atIndex:startOffs];
                 }
             }
             
@@ -584,7 +586,13 @@ static void * const KVO = (void*)&KVO;
             }
         }
         
-        self.view.selectedRange = selRange;
+        // I'm not sure why Xcode behaves this way, but it does.
+        if(selRange.length == 0) {
+            self.view.selectedRange = selRange;
+        }
+        else {
+            self.view.selectedRange = lineRange;
+        }
         
         [self recolorRange:lineRange];
     }];

@@ -58,7 +58,6 @@ To Do
 The current version of SyntaxKit is basically functional, and is used in [Ingist][ingist] for code editing. However, many things are broken or suboptimal:
 
 * There are some rendering glitches in ASKLineNumberView, usually brought out by scrolling.
-* -[ASKSyntaxViewController indentSelection:] and -[ASKSyntaxViewController unindentSelection:] do not fully support ASKSyntaxViewController's indentation-controlling properties.
 * I might rework the syntax marking to base it on regexes.
 * While the ASKSyntaxColorPalette object now encapsulates mapping syntax components to colors, there's currently no mechanism to handle editing color palettes.
 * Documentation is generally either nonexistent or out of date.

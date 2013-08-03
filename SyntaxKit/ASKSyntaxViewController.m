@@ -42,13 +42,15 @@
 #import "ASKSyntaxColorist.h"
 #import "ASKSyntaxColorPalette.h"
 
+static void * const KVO = (void*)&KVO;
+
 // -----------------------------------------------------------------------------
 //	Globals:
 // -----------------------------------------------------------------------------
 
 @interface ASKSyntaxViewController () <ASKSyntaxColoristDelegate>
 
--(void) recolorRange: (NSRange) range;
+- (void)recolorRange:(NSRange)range;
 @property (assign) BOOL recoloring;
 
 @property (strong) ASKSyntaxColorist * syntaxColorist;
@@ -60,10 +62,7 @@
 //	Macros:
 // -----------------------------------------------------------------------------
 
-@implementation ASKSyntaxViewController {
-	NSRange								affectedCharRange;
-	NSString*							replacementString;
-}
+@implementation ASKSyntaxViewController
 
 - (void)setSyntax:(ASKSyntax *)syntax {
     _syntax = syntax;
@@ -74,12 +73,6 @@
 - (NSTextView*)view {
     return (NSTextView*)[super view];
 }
-
-// -----------------------------------------------------------------------------
-//	initWithNibName:bundle:
-//		Constructor that inits sourceCode member variable as a flag. It's
-//		storage for the text until the NIB's been loaded.
-// -----------------------------------------------------------------------------
 
 - (void)prep {
     _colorPalette = ASKSyntaxColorPalette.standardColorPalette;
@@ -92,66 +85,55 @@
     _tabDepth = 4;
 }
 
--(id)	initWithNibName: (NSString*)inNibName bundle: (NSBundle*)inBundle
-{
-    self = [super initWithNibName: inNibName bundle: inBundle];
-    if( self )
-	{
+-(id)initWithNibName:(NSString*)inNibName bundle:(NSBundle*)inBundle {
+    if((self = [super initWithNibName: inNibName bundle: inBundle])) {
         [self prep];
 	}
     return self;
 }
 
 - (id)initWithCoder:(NSCoder *)aDecoder {
-    self = [super initWithCoder:aDecoder];
-    if( self )
-    {
+    if((self = [super initWithCoder:aDecoder])) {
         [self prep];
     }
     return self;
 }
 
--(void)	dealloc
-{
+- (void)setUpSyntaxColoring {
+    self.view.layoutManager.typesetter = [ASKTypesetter new];
+	
+	// Register for "text changed" notifications of our text storage
+	[NSNotificationCenter.defaultCenter addObserver:self selector:@selector(processEditing:) name:NSTextStorageDidProcessEditingNotification object:self.view.textStorage];
+	
+	// Make sure text isn't wrapped
+	self.wrapsLines = self.wrapsLines;
+    
+    // Set up tab depth
+    [self addObserver:self forKeyPath:@"view.font" options:NSKeyValueObservingOptionInitial context:KVO];
+	
+	// Do initial syntax coloring of our file
+	[self recolorCompleteFile:nil];
+	
+	// Text view selects at end of text, use something more sensible
+	NSRange startSelRange = [self defaultSelectedRange];
+	self.view.selectedRange = startSelRange;
+    
+    // Set up line numbering
+    self.view.enclosingScrollView.verticalRulerView = [[ASKLineNumberView alloc] initWithScrollView:self.view.enclosingScrollView];
+    self.showsLineNumbers = self.showsLineNumbers;
+	
+    // Updates active line number
+    [self textViewDidChangeSelection:[NSNotification notificationWithName:nil object:self.view]];
+	
+    self.view.usesFindPanel = YES;
+}
+
+- (void)dealloc {
 	[[NSNotificationCenter defaultCenter] removeObserver: self];
     [self removeObserver:self forKeyPath:@"view.font" context:KVO];
     
     self.view.enclosingScrollView.verticalRulerView = nil;
 }
-
-
--(void)	setUpSyntaxColoring {
-    self.view.layoutManager.typesetter = [ASKTypesetter new];
-	
-	// Register for "text changed" notifications of our text storage:
-	[[NSNotificationCenter defaultCenter] addObserver: self selector: @selector(processEditing:)
-					name: NSTextStorageDidProcessEditingNotification
-					object: [[self view] textStorage]];
-	
-	// Make sure text isn't wrapped:
-	[self setWrapsLines:self.wrapsLines];
-    
-    // Set up tab depth
-    [self addObserver:self forKeyPath:@"view.font" options:NSKeyValueObservingOptionInitial context:KVO];
-	
-	// Do initial syntax coloring of our file:
-	[self recolorCompleteFile: nil];
-	
-	// Text view selects at end of text, use something more sensible:
-	NSRange		startSelRange = [self defaultSelectedRange];
-	[[self view] setSelectedRange: startSelRange];
-    
-    self.view.enclosingScrollView.verticalRulerView = [[ASKLineNumberView alloc] initWithScrollView:self.view.enclosingScrollView];
-    self.showsLineNumbers = self.showsLineNumbers;
-	
-    [self textViewDidChangeSelection:[NSNotification notificationWithName:nil object:self.view]];
-	
-	// Make sure we can use "find" if we're on 10.3:
-	if( [[self view] respondsToSelector: @selector(setUsesFindPanel:)] )
-		[[self view] setUsesFindPanel: YES];
-}
-
-static void * const KVO = (void*)&KVO;
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
     if(context != KVO) {
@@ -163,70 +145,52 @@ static void * const KVO = (void*)&KVO;
     }
 }
 
-
-// -----------------------------------------------------------------------------
-//	setView:
-//		We've just been given a view! Apply initial syntax coloring.
-// -----------------------------------------------------------------------------
-
 @dynamic view;
 
--(void)	setView: (NSTextView*)theView
-{
-    [super setView: theView];
+- (void)setView:(NSTextView*)theView {
+    super.view = theView;
 	
-	[theView setDelegate: self];
+	theView.delegate = self;
 	[self setUpSyntaxColoring];	// TODO: If someone calls this twice, we should only call part of this twice!
 }
 
-
-// -----------------------------------------------------------------------------
-//	processEditing:
-//		Part of the text was changed. Recolor it.
-// -----------------------------------------------------------------------------
-
--(void) processEditing: (NSNotification*)notification
-{
-    NSTextStorage	*textStorage = [notification object];
-	NSRange			range = [textStorage editedRange];
-	NSUInteger		changeInLen = [textStorage changeInLength];
-	BOOL			wasInUndoRedo = [[self undoManager] isUndoing] || [[self undoManager] isRedoing];
-	BOOL			textLengthMayHaveChanged = NO;
+- (void)processEditing:(NSNotification*)notification {
+    NSTextStorage	* textStorage = notification.object;
+	NSRange range = textStorage.editedRange;
+	NSUInteger changeInLen = textStorage.changeInLength;
+	BOOL textLengthMayHaveChanged = NO;
 	
 	// Was delete op or undo that could have changed text length?
-	if( wasInUndoRedo )
-	{
+	if(self.undoManager.isUndoing || self.undoManager.isRedoing) {
 		textLengthMayHaveChanged = YES;
-		range = [[self view] selectedRange];
+		range = self.view.selectedRange;
 	}
-	if( changeInLen <= 0 )
+	if(changeInLen <= 0) {
 		textLengthMayHaveChanged = YES;
+    }
 	
-	//	Try to get chars around this to recolor any identifier we're in:
-	if( textLengthMayHaveChanged )
-	{
-		if( range.location > 0 )
+	// Try to get chars around this to recolor any identifier we're in:
+	if(textLengthMayHaveChanged) {
+		if(range.location > 0) {
 			range.location--;
-		if( (range.location +range.length +2) < [textStorage length] )
+        }
+        
+		if((range.location + range.length + 2) < textStorage.length) {
 			range.length += 2;
-		else if( (range.location +range.length +1) < [textStorage length] )
+        }
+		else if((range.location +range.length + 1) < textStorage.length) {
 			range.length += 1;
+        }
 	}
 	
-	NSRange						currRange = range;
+	NSRange currRange = range;
     
 	// Perform the syntax coloring:
-	if( range.length > 0 )
-	{
-		NSRange			effectiveRange;
-		ASKSyntaxComponent *		rangeMode;
+	if( range.length > 0 ) {
+		NSRange effectiveRange;
+		ASKSyntaxComponent * rangeMode = [textStorage attribute:ASKSyntaxComponentAttributeName atIndex:currRange.location effectiveRange:&effectiveRange];
 		
-		
-		rangeMode = [textStorage attribute: ASKSyntaxComponentAttributeName
-								atIndex: currRange.location
-								effectiveRange: &effectiveRange];
-		
-		NSUInteger		x = range.location;
+		NSUInteger i = range.location;
 		
 		/* TODO: If we're in a multi-line comment and we're typing a comment-end
 			character, or we're in a string and we're typing a quote character,
@@ -234,163 +198,135 @@ static void * const KVO = (void*)&KVO;
 			end character in the recalc. */
 		
 		// Scan up to prev line break:
-		while( x > 0 )
-		{
-			unichar theCh = [[textStorage string] characterAtIndex: x];
-			if( theCh == '\n' || theCh == '\r' )
+		while(i > 0) {
+			if([self newlineAtIndex:i ofString:textStorage.string]) {
 				break;
-			--x;
+            }
+			--i;
 		}
 		
-		currRange.location = x;
+		currRange.location = i;
 		
 		// Scan up to next line break:
-		x = range.location +range.length;
+		i = range.location + range.length;
 		
-		while( x < [textStorage length] )
-		{
-			unichar theCh = [[textStorage string] characterAtIndex: x];
-			if( theCh == '\n' || theCh == '\r' )
+		while(i < textStorage.length) {
+			if([self newlineAtIndex:i ofString:textStorage.string]) {
 				break;
-			++x;
+            }
+			++i;
 		}
 		
-		currRange.length = x -currRange.location;
+		currRange.length = i - currRange.location;
 		
 		// Open identifier, comment etc.? Make sure we include the whole range.
-		if( rangeMode != nil )
-			currRange = NSUnionRange( currRange, effectiveRange );
+		if(rangeMode != nil) {
+			currRange = NSUnionRange(currRange, effectiveRange);
+        }
 		
 		// Actually recolor the changed part:
-		[self recolorRange: currRange];
+		[self recolorRange:currRange];
 	}
 }
 
-
-// -----------------------------------------------------------------------------
-//	textView:shouldChangeTextinRange:replacementString:
-//		Perform indentation-maintaining if we're supposed to.
-// -----------------------------------------------------------------------------
-
--(BOOL) textView:(NSTextView *)tv shouldChangeTextInRange:(NSRange)afcr replacementString:(NSString *)rps
-{
+- (BOOL)textView:(NSTextView *)textView shouldChangeTextInRange:(NSRange)affectedCharRange replacementString:(NSString *)replacementString {
     if([self.delegate respondsToSelector:@selector(textView:shouldChangeTextInRange:replacementString:)]) {
-        if(![self.delegate textView:tv shouldChangeTextInRange:afcr replacementString:rps]) {
+        if(![self.delegate textView:textView shouldChangeTextInRange:affectedCharRange replacementString:replacementString]) {
             return NO;
         }
     }
     
-	if( self.maintainIndentation )
-	{
-		affectedCharRange = afcr;
-		replacementString = rps;
-		
-		[self performSelector: @selector(didChangeText) withObject: nil afterDelay: 0.0];	// Queue this up on the event loop. If we change the text here, we only confuse the undo stack.
+	if(self.maintainIndentation) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            // Queue this up on the event loop. If we change the text here, we only confuse the undo stack.
+            [self didChangeTextInRange:affectedCharRange replacementString:replacementString];
+        });
 	}
 	
 	return YES;
 }
 
-
--(void)	didChangeText	// This actually does what we want to do in textView:shouldChangeTextInRange:
-{
-	if( self.maintainIndentation && replacementString && ([replacementString isEqualToString:@"\n"]
-		|| [replacementString isEqualToString:@"\r"]) )
-	{
-		NSMutableAttributedString*  textStore = [[self view] textStorage];
-		BOOL						hadSpaces = NO;
-		NSUInteger					lastSpace = affectedCharRange.location,
-									prevLineBreak = 0;
-		NSRange						spacesRange = { 0, 0 };
-		unichar						theChar = 0;
-		NSUInteger					x = (affectedCharRange.location == 0) ? 0 : affectedCharRange.location -1;
-		NSString*					tsString = [textStore string];
-		
-		while( YES )
-		{
-			if( x > ([tsString length] -1) )
-				break;
-			
-			theChar = [tsString characterAtIndex: x];
-			
-			switch( theChar )
-			{
-				case '\n':
-				case '\r':
-					prevLineBreak = x +1;
-					x = 0;  // Terminate the loop.
-					break;
-				
-				case ' ':
-				case '\t':
-					if( !hadSpaces )
-					{
-						lastSpace = x;
-						hadSpaces = YES;
-					}
-					break;
-				
-				default:
-					hadSpaces = NO;
-					break;
-			}
-			
-			if( x == 0 )
-				break;
-			
-			x--;
-		}
-		
-		if( hadSpaces )
-		{
-			spacesRange.location = prevLineBreak;
-			spacesRange.length = lastSpace -prevLineBreak +1;
-			if( spacesRange.length > 0 )
-				[[self view] insertText: [tsString substringWithRange:spacesRange]];
-		}
-	}
+- (void)didChangeTextInRange:(NSRange)affectedCharRange replacementString:(NSString*)replacementString {
+    if(!self.maintainIndentation) {
+        return;
+    }
+    if(![replacementString isEqualToString:@"\n"] && ![replacementString isEqualToString:@"\r"]) {
+        return;
+    }
+    
+    BOOL hadSpaces = NO;
+    NSUInteger lastSpace = affectedCharRange.location, prevLineBreak = 0;
+    NSUInteger i = (affectedCharRange.location == 0) ? 0 : affectedCharRange.location - 1;
+    NSString * tsString = self.view.textStorage.string;
+    
+    while(YES) {
+        if(i > (tsString.length - 1)) {
+            break;
+        }
+        
+        unichar theChar = [tsString characterAtIndex:i];
+        
+        switch(theChar) {
+            case '\n':
+            case '\r':
+                prevLineBreak = i + 1;
+                i = 0;  // Terminate the loop.
+                break;
+            
+            case ' ':
+            case '\t':
+                if(!hadSpaces) {
+                    lastSpace = i;
+                    hadSpaces = YES;
+                }
+                break;
+            
+            default:
+                hadSpaces = NO;
+                break;
+        }
+        
+        if(i == 0) {
+            break;
+        }
+        
+        i--;
+    }
+    
+    NSRange spacesRange = { 0, 0 };
+    
+    if(hadSpaces) {
+        spacesRange.location = prevLineBreak;
+        spacesRange.length = lastSpace - prevLineBreak + 1;
+        
+        if(spacesRange.length > 0) {
+            [self.view insertText:[tsString substringWithRange:spacesRange]];
+        }
+    }
 }
 
-
-// -----------------------------------------------------------------------------
-//	toggleMaintainIndentation:
-//		Action for menu item that toggles indentation maintaining on and off.
-// -----------------------------------------------------------------------------
-
--(IBAction)	toggleMaintainIndentation: (id)sender
-{
-	[self setMaintainIndentation: ![self maintainIndentation]];
+- (IBAction)toggleMaintainIndentation:(id)sender {
+	self.maintainIndentation = !self.maintainIndentation;
     [self propagateValue:@(self.maintainIndentation) forBinding:@"maintainIndentation"];
 }
 
-
-// -----------------------------------------------------------------------------
-//	goToLine:
-//		This selects the specified line of the document.
-// -----------------------------------------------------------------------------
-
--(void)	goToLine: (NSUInteger)lineNum
-{
-	NSRange			theRange = { 0, 0 };
-	NSString*		vString = [[self view] string];
-	NSUInteger		currLine = 1;
-	NSCharacterSet* vSet = [NSCharacterSet characterSetWithCharactersInString: @"\n\r"];
-	unsigned		x;
-	unsigned		lastBreakOffs = 0;
-	unichar			lastBreakChar = 0;
+- (void)goToLine:(NSUInteger)lineNum {
+	NSRange	 theRange = { 0, 0 };
+	NSString * vString = self.view.string;
+	NSUInteger currLine = 1;
+	NSUInteger lastBreakOffs = 0;
+	unichar lastBreakChar = 0;
 	
-	for( x = 0; x < [vString length]; x++ )
-	{
-		unichar		theCh = [vString characterAtIndex: x];
-		
+	for(NSUInteger i = 0; i < vString.length; i++ ) {
 		// Skip non-linebreak chars:
-		if( ![vSet characterIsMember: theCh] )
+		if(![self newlineAtIndex:i ofString:vString]) {
 			continue;
+        }
+        
+        unichar theCh = [vString characterAtIndex:i];
 		
 		// If this is the LF in a CRLF sequence, only count it as one line break:
-		if( theCh == '\n' && lastBreakOffs == (x-1)
-			&& lastBreakChar == '\r' )
-		{
+		if(theCh == '\n' && lastBreakOffs == (i - 1) && lastBreakChar == '\r') {
 			lastBreakOffs = 0;
 			lastBreakChar = 0;
 			theRange.location++;
@@ -398,60 +334,73 @@ static void * const KVO = (void*)&KVO;
 		}
 		
 		// Calc range and increase line number:
-		theRange.length = x -theRange.location +1;
-		if( currLine >= lineNum )
+		theRange.length = i - theRange.location + 1;
+		if(currLine >= lineNum) {
 			break;
+        }
 		currLine++;
 		theRange.location = theRange.location +theRange.length;
-		lastBreakOffs = x;
+		lastBreakOffs = i;
 		lastBreakChar = theCh;
 	}
 	
-	[[self view] scrollRangeToVisible: theRange];
-	[[self view] setSelectedRange: theRange];
+	[self.view scrollRangeToVisible:theRange];
+	self.view.selectedRange = theRange;
 }
 
+- (void)goToCharacter:(NSUInteger)charNum {
+	[self goToRangeFrom:charNum toChar:charNum + 1];
+}
 
-// -----------------------------------------------------------------------------
-//	turnOffWrapping
-//		Makes the view so wide that text won't wrap anymore.
-// -----------------------------------------------------------------------------
+- (void)goToRangeFrom:(NSUInteger)startCh toChar:(NSUInteger)endCh {
+	NSRange theRange = { 0, 0 };
+    
+	theRange.location = startCh - 1;
+	theRange.length = endCh - startCh;
+	
+	if(startCh == 0 || startCh > self.view.string.length) {
+		return;
+    }
+	
+	[self.view scrollRangeToVisible: theRange];
+	self.view.selectedRange = theRange;
+}
 
-- (void)setWrapsLines:(BOOL)wrap
-{
+- (void)setWrapsLines:(BOOL)wrap {
     _wrapsLines = wrap;
     
-	NSScrollView *textScrollView = [[self view] enclosingScrollView];
-	NSSize contentSize = [textScrollView contentSize];
-	[[self view] setMinSize:contentSize];
-	NSTextContainer *textContainer = [[self view] textContainer];
+	NSScrollView * textScrollView = self.view.enclosingScrollView;
+	NSSize contentSize = textScrollView.contentSize;
+	NSTextContainer * textContainer = self.view.textContainer;
+    
+    self.view.minSize = contentSize;
     
 	if (wrap) {
         // Turn off now-unnecessary scroller:
-        [textScrollView setHasHorizontalScroller: NO];
+        textScrollView.hasHorizontalScroller = NO;
         
         // Make text container width match text view:
-        [textContainer setContainerSize: NSMakeSize(contentSize.width, CGFLOAT_MAX)];
-        [textContainer setWidthTracksTextView: YES];
+        textContainer.containerSize = NSMakeSize(contentSize.width, CGFLOAT_MAX);
+        textContainer.widthTracksTextView = YES;
         
         // Make sure text view width matches scroll view:
-        [[self view] setMaxSize: NSMakeSize(contentSize.width, CGFLOAT_MAX)];
-        [[self view] setHorizontallyResizable: NO];
-        [[self view] setAutoresizingMask: NSViewWidthSizable];
-	} else {        
+        self.view.maxSize = NSMakeSize(contentSize.width, CGFLOAT_MAX);
+        self.view.horizontallyResizable = NO;
+        self.view.autoresizingMask = NSViewWidthSizable;
+	}
+    else {        
         // Make sure we can see right edge of line:
-        [textScrollView setHasHorizontalScroller: YES];
+        textScrollView.hasHorizontalScroller = YES;
         
         // Make text container so wide it won't wrap:
-        [textContainer setContainerSize: NSMakeSize(CGFLOAT_MAX, CGFLOAT_MAX)];
-        [textContainer setWidthTracksTextView: NO];
+        textContainer.containerSize = NSMakeSize(CGFLOAT_MAX, CGFLOAT_MAX);
+        textContainer.widthTracksTextView = NO;
         
         // Make sure text view is wide enough:
-        [[self view] setMaxSize: NSMakeSize(CGFLOAT_MAX, CGFLOAT_MAX)];
-        [[self view] setHorizontallyResizable: YES];
-        [[self view] setAutoresizingMask: NSViewNotSizable];
+        self.view.maxSize = NSMakeSize(CGFLOAT_MAX, CGFLOAT_MAX);
+        self.view.horizontallyResizable = YES;
+        self.view.autoresizingMask = NSViewNotSizable;
 	}
-    
 }
 
 - (void)toggleWrapsLines:(id)sender {
@@ -459,353 +408,236 @@ static void * const KVO = (void*)&KVO;
     [self propagateValue:@(self.wrapsLines) forBinding:@"wrapsLines"];
 }
 
-
-// -----------------------------------------------------------------------------
-//	goToCharacter:
-//		This selects the specified character in the document.
-// -----------------------------------------------------------------------------
-
--(void)	goToCharacter: (NSUInteger)charNum
-{
-	[self goToRangeFrom: charNum toChar: charNum +1];
+- (void)restoreText:(NSString*)textToRestore {
+    //		Main bottleneck for our (very primitive and inefficient) undo
+    //		implementation. This takes a copy of the previous state of the
+    //		*entire text* and restores it.
+    
+	[self.undoManager disableUndoRegistration];
+	self.view.string = textToRestore;
+	[self.undoManager enableUndoRegistration];
 }
 
+- (void)withUndo:(dispatch_block_t)block {
+    [self.undoManager beginUndoGrouping];
+    
+	NSString * prevText = [self.view.textStorage.string copy];
+    [[self.undoManager prepareWithInvocationTarget:self] restoreText:prevText];
+    
+    block();
+    
+    [self.undoManager endUndoGrouping];
+}
 
-// -----------------------------------------------------------------------------
-//	goToRangeFrom:toChar:
-//		Main bottleneck for selecting ranges in our file.
-// -----------------------------------------------------------------------------
+- (BOOL)newlineAtIndex:(NSUInteger)index ofString:(NSString*)string {
+    unichar ch = [string characterAtIndex:index];
+    return ch == '\n' || ch == '\r';
+}
 
--(void) goToRangeFrom: (NSUInteger)startCh toChar: (NSUInteger)endCh
-{
-	NSRange		theRange = { 0, 0 };
+- (NSRange)rangeExcludingTrailingNewline:(NSRange)selRange fromString:(NSString*)str {
+    if(selRange.length > 1) {
+        if([self newlineAtIndex:NSMaxRange(selRange) - 1 ofString:str]) {
+            selRange.length--;
+        }
+    }
+    return selRange;
+}
 
-	theRange.location = startCh -1;
-	theRange.length = endCh -startCh;
+- (void)adjustRange:(NSRangePointer)range forLengthChange:(NSInteger)delta atIndex:(NSUInteger)i {
+    if(NSLocationInRange(i, *range)) {
+        range->length += delta;
+    }
+    else if(i < range->location) {
+        range->location += delta;
+    }
+}
+
+- (void)insertIndentationIntoString:(NSMutableString*)str atIndex:(NSUInteger)i adjustingRange:(NSRangePointer)range {
+    NSString * indent = [self indentation];
+    
+    [str insertString:indent atIndex:i];
+    [self adjustRange:range forLengthChange:indent.length atIndex:i];
+}
+
+- (IBAction)indentSelection:(id)sender {
+	[self withUndo:^{
+        NSRange selRange = self.view.selectedRange, nuSelRange = selRange;
+        NSMutableString * str = self.view.textStorage.mutableString;
+        
+        NSRange lineRange = [str lineRangeForRange:selRange];
+        
+        for(NSUInteger i = NSMaxRange(lineRange) - 1 - 1; i >= lineRange.location; i--) {
+            if([self newlineAtIndex:i ofString:str]) {
+                [self insertIndentationIntoString:str atIndex:i + 1 adjustingRange:&nuSelRange];
+            }
+            
+            if(i == 0) {
+                break;
+            }
+        }
+        
+        [self insertIndentationIntoString:str atIndex:lineRange.location adjustingRange:&nuSelRange];
+        
+        self.view.selectedRange = nuSelRange;
+    }];
+}
+
+- (void)removeIndentationFromString:(NSMutableString*)str atIndex:(NSUInteger)i upToIndex:(NSUInteger)lastIndex adjustingRange:(NSRangePointer)range {
+    if([str characterAtIndex:i] == '\t') {
+        [str deleteCharactersInRange:NSMakeRange(i, 1)];
+        [self adjustRange:range forLengthChange:-1 atIndex:i];
+    }
+    else {
+        for(NSUInteger j = 0; (j < self.tabDepth) && (i + j <= lastIndex); j++) {
+            if([str characterAtIndex:i] != ' ') {
+                break;
+            }
+            [str deleteCharactersInRange:NSMakeRange(i, 1)];
+            [self adjustRange:range forLengthChange:-1 atIndex:i];
+        }
+    }
+}
+
+- (IBAction)unindentSelection:(id)sender {
+	__block NSRange selRange = self.view.selectedRange, nuSelRange = selRange;
+	NSUInteger lastIndex = selRange.location + selRange.length - 1;
+	NSMutableString * str = self.view.textStorage.mutableString;
 	
-	if( startCh == 0 || startCh > [[[self view] string] length] )
+    NSRange lineRange = [str lineRangeForRange:selRange];
+	
+	if(lineRange.length <= 1) {
 		return;
+    }
 	
-	[[self view] scrollRangeToVisible: theRange];
-	[[self view] setSelectedRange: theRange];
+	[self withUndo:^{
+        for(NSUInteger i = NSMaxRange(lineRange) - 1 - 1; i >= lineRange.location; i--) {
+            if([self newlineAtIndex:i ofString:str]) {
+                [self removeIndentationFromString:str atIndex:i + 1 upToIndex:lastIndex adjustingRange:&nuSelRange];
+            }
+            
+            if(i == 0) {
+                break;
+            }
+        }
+        
+        [self removeIndentationFromString:str atIndex:lineRange.location upToIndex:lastIndex adjustingRange:&nuSelRange];
+        
+        self.view.selectedRange = nuSelRange;
+    }];
 }
 
-
-// -----------------------------------------------------------------------------
-//	restoreText:
-//		Main bottleneck for our (very primitive and inefficient) undo
-//		implementation. This takes a copy of the previous state of the
-//		*entire text* and restores it.
-// -----------------------------------------------------------------------------
-
--(void)	restoreText: (NSString*)textToRestore
-{
-	[[self undoManager] disableUndoRegistration];
-	[[self view] setString: textToRestore];
-	[[self undoManager] enableUndoRegistration];
+- (IBAction)toggleCommentForSelection:(id)sender {
+    __block NSRange selRange = self.view.selectedRange;
+	NSMutableString * str = self.view.textStorage.mutableString;
+	__block NSRange lineRange = [str lineRangeForRange:selRange];
+	
+	[self withUndo:^{
+        NSString * commentPrefix = self.syntax.oneLineCommentPrefix;
+        if(!commentPrefix || [commentPrefix length] == 0) {
+            commentPrefix = @"# ";
+        }
+        
+        NSUInteger commentPrefixLength = commentPrefix.length;
+        NSString * trimmedCommentPrefix = [commentPrefix stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+        
+        if(!trimmedCommentPrefix || trimmedCommentPrefix.length == 0 ) {
+            // Comments apparently *are* whitespace.
+            trimmedCommentPrefix = commentPrefix;
+        }
+        
+        NSUInteger trimmedCommentPrefixLength = trimmedCommentPrefix.length;
+        
+        for(NSUInteger i = NSMaxRange(lineRange) - 1 - 1; i >= lineRange.location; i--) {
+            BOOL hitEnd = (i == lineRange.location);
+            BOOL hitLineBreak = [self newlineAtIndex:i ofString:str];
+            
+            if(hitLineBreak || hitEnd) {
+                NSUInteger	startOffs = i + 1;
+                if(hitEnd && !hitLineBreak) {
+                    startOffs = i;
+                }
+                
+                NSUInteger possibleCommentLength = 0;
+                if(commentPrefixLength <= (lineRange.length + lineRange.location - startOffs)) {
+                    possibleCommentLength = commentPrefixLength;
+                }
+                else if(trimmedCommentPrefixLength <= (lineRange.length + lineRange.location - startOffs)) {
+                    possibleCommentLength = trimmedCommentPrefixLength;
+                }
+                
+                NSString	* lineStart = [str substringWithRange: NSMakeRange(startOffs, possibleCommentLength)];
+                BOOL haveWhitespaceToo = [lineStart hasPrefix:commentPrefix];
+                
+                if([lineStart hasPrefix:trimmedCommentPrefix]) {
+                    NSInteger commentLength = haveWhitespaceToo ? commentPrefixLength : trimmedCommentPrefixLength;
+                    [str deleteCharactersInRange: NSMakeRange(startOffs, commentLength)];
+                    [self adjustRange:&selRange forLengthChange:-commentLength atIndex:startOffs];
+                    [self adjustRange:&lineRange forLengthChange:-commentLength atIndex:startOffs];
+                }
+                else {
+                    [str insertString:commentPrefix atIndex:startOffs];
+                    [self adjustRange:&selRange forLengthChange:commentPrefixLength atIndex:startOffs];
+                    [self adjustRange:&lineRange forLengthChange:commentPrefixLength atIndex:startOffs];
+                }
+            }
+            
+            if(i == 0) {
+                break;
+            }
+        }
+        
+        // I'm not sure why Xcode behaves this way, but it does.
+        if(selRange.length == 0) {
+            self.view.selectedRange = selRange;
+        }
+        else {
+            self.view.selectedRange = lineRange;
+        }
+        
+        [self recolorRange:lineRange];
+    }];
 }
 
-
-// -----------------------------------------------------------------------------
-//	indentSelection:
-//		Indent the selected lines by one more level (i.e. one more tab).
-// -----------------------------------------------------------------------------
-
--(IBAction) indentSelection: (id)sender
-{
-	[[self undoManager] beginUndoGrouping];
-	NSString*	prevText = [[[[self view] textStorage] string] copy];
-	[[self undoManager] registerUndoWithTarget: self selector: @selector(restoreText:) object: prevText];
-	
-	NSRange				selRange = [[self view] selectedRange],
-						nuSelRange = selRange;
-	NSUInteger			x;
-	NSMutableString*	str = [[[self view] textStorage] mutableString];
-	
-	// Unselect any trailing returns so we don't indent the next line after a full-line selection.
-	if( selRange.length > 1 && ([str characterAtIndex: selRange.location +selRange.length -1] == '\n'
-		|| [str characterAtIndex: selRange.location +selRange.length -1] == '\r') )
-		selRange.length--;
-	
-	for( x = selRange.location +selRange.length -1; x >= selRange.location; x-- )
-	{
-		if( [str characterAtIndex: x] == '\n'
-			|| [str characterAtIndex: x] == '\r' )
-		{
-			[str insertString:[self indentation] atIndex: x+1];
-			nuSelRange.length++;
-		}
-		
-		if( x == 0 )
-			break;
-	}
-	
-	[str insertString:[self indentation] atIndex: nuSelRange.location];
-	nuSelRange.length++;
-	[[self view] setSelectedRange: nuSelRange];
-	[[self undoManager] endUndoGrouping];
-}
-
-
-// -----------------------------------------------------------------------------
-//	unindentSelection:
-//		Un-indent the selected lines by one level (i.e. remove one tab from each
-//		line's start).
-// -----------------------------------------------------------------------------
-
--(IBAction) unindentSelection: (id)sender
-{
-	NSRange				selRange = [[self view] selectedRange],
-						nuSelRange = selRange;
-	NSUInteger			x, n;
-	NSUInteger			lastIndex = selRange.location +selRange.length -1;
-	NSMutableString*	str = [[[self view] textStorage] mutableString];
-	
-	// Unselect any trailing returns so we don't indent the next line after a full-line selection.
-	if( selRange.length > 1 && ([str characterAtIndex: selRange.location +selRange.length -1] == '\n'
-		|| [str characterAtIndex: selRange.location +selRange.length -1] == '\r') )
-		selRange.length--;
-	
-	if( selRange.length == 0 )
-		return;
-	
-	[[self undoManager] beginUndoGrouping];
-	NSString*	prevText = [[[[self view] textStorage] string] copy];
-	[[self undoManager] registerUndoWithTarget: self selector: @selector(restoreText:) object: prevText];
-		
-	for( x = lastIndex; x >= selRange.location; x-- )
-	{
-		if( [str characterAtIndex: x] == '\n'
-			|| [str characterAtIndex: x] == '\r' )
-		{
-			if( (x +1) <= lastIndex)
-			{
-				if( [str characterAtIndex: x+1] == '\t' )
-				{
-					[str deleteCharactersInRange: NSMakeRange(x+1,1)];
-					nuSelRange.length--;
-				}
-				else
-				{
-					for( n = x+1; (n <= (x+4)) && (n <= lastIndex); n++ )
-					{
-						if( [str characterAtIndex: x+1] != ' ' )
-							break;
-						[str deleteCharactersInRange: NSMakeRange(x+1,1)];
-						nuSelRange.length--;
-					}
-				}
-			}
-		}
-		
-		if( x == 0 )
-			break;
-	}
-	
-	if( [str characterAtIndex: nuSelRange.location] == '\t' )
-	{
-		[str deleteCharactersInRange: NSMakeRange(nuSelRange.location,1)];
-		nuSelRange.length--;
-	}
-	else
-	{
-		for( n = 1; (n <= 4) && (n <= lastIndex); n++ )
-		{
-			if( [str characterAtIndex: nuSelRange.location] != ' ' )
-				break;
-			[str deleteCharactersInRange: NSMakeRange(nuSelRange.location,1)];
-			nuSelRange.length--;
-		}
-	}
-	
-	[[self view] setSelectedRange: nuSelRange];
-	[[self undoManager] endUndoGrouping];
-}
-
-
-// -----------------------------------------------------------------------------
-//	toggleCommentForSelection:
-//		Add a comment to the start of this line/remove an existing comment.
-// -----------------------------------------------------------------------------
-
--(IBAction)	toggleCommentForSelection: (id)sender
-{
-	NSRange				selRange = [[self view] selectedRange];
-	NSUInteger			x;
-	NSMutableString*	str = [[[self view] textStorage] mutableString];
-	
-	if( selRange.length == 0 )
-		selRange.length++;
-	
-	// Are we at the end of a line?
-	if ([str characterAtIndex: selRange.location] == '\n' ||
-			[str characterAtIndex: selRange.location] == '\r') 
-	{
-		if( selRange.location > 0 )
-		{
-			selRange.location--;
-			selRange.length++;
-		}
-	}
-	
-	// Move the selection to the start of a line
-	while( selRange.location > 0 )
-	{
-		if( [str characterAtIndex: selRange.location] == '\n'
-			|| [str characterAtIndex: selRange.location] == '\r')
-		{
-			selRange.location++;
-			selRange.length--;
-			break;
-		}
-		selRange.location--;
-		selRange.length++;
-	}
-
-	// Select up to the end of a line
-	while ( (selRange.location +selRange.length) < [str length]  
-				&& !([str characterAtIndex:selRange.location+selRange.length-1] == '\n' 
-					|| [str characterAtIndex:selRange.location+selRange.length-1] == '\r') ) 
-	{
-		selRange.length++;
-	}
-	
-	if (selRange.length == 0)
-		return;
-	
-	[[self undoManager] beginUndoGrouping];
-	NSString*	prevText = [[[[self view] textStorage] string] copy];
-	[[self undoManager] registerUndoWithTarget: self selector: @selector(restoreText:) object: prevText];
-	
-	// Unselect any trailing returns so we don't comment the next line after a full-line selection.
-	while( ([str characterAtIndex: selRange.location +selRange.length -1] == '\n' ||
-				[str characterAtIndex: selRange.location +selRange.length -1] == '\r')
-				&& selRange.length > 0 )
-	{
-		selRange.length--;
-	}
-	
-	
-	NSRange nuSelRange = selRange;
-	
-	NSString*	commentPrefix = self.syntax.oneLineCommentPrefix;
-	if( !commentPrefix || [commentPrefix length] == 0 )
-		commentPrefix = @"# ";
-	NSUInteger	commentPrefixLength = [commentPrefix length];
-	NSString*	trimmedCommentPrefix = [commentPrefix stringByTrimmingCharactersInSet: [NSCharacterSet whitespaceCharacterSet]];
-	if( !trimmedCommentPrefix || [trimmedCommentPrefix length] == 0 )	// Comments apparently *are* whitespace.
-		trimmedCommentPrefix = commentPrefix;
-	NSUInteger	trimmedCommentPrefixLength = [trimmedCommentPrefix length];
-	
-	for( x = selRange.location +selRange.length -1; x >= selRange.location; x-- )
-	{
-		BOOL	hitEnd = (x == selRange.location);
-		BOOL	hitLineBreak = [str characterAtIndex: x] == '\n' || [str characterAtIndex: x] == '\r';
-		if( hitLineBreak || hitEnd )
-		{
-			NSUInteger	startOffs = x+1;
-			if( hitEnd && !hitLineBreak )
-				startOffs = x;
-			NSUInteger	possibleCommentLength = 0;
-			if( commentPrefixLength <= (selRange.length +selRange.location -startOffs) )
-				possibleCommentLength = commentPrefixLength;
-			else if( trimmedCommentPrefixLength <= (selRange.length +selRange.location -startOffs) )
-				possibleCommentLength = trimmedCommentPrefixLength;
-			
-			NSString	*	lineStart = [str substringWithRange: NSMakeRange( startOffs, possibleCommentLength )];
-			BOOL			haveWhitespaceToo = [lineStart hasPrefix: commentPrefix];
-			if( [lineStart hasPrefix: trimmedCommentPrefix] )
-			{
-				NSInteger	commentLength = haveWhitespaceToo ? commentPrefixLength : trimmedCommentPrefixLength;
-				[str deleteCharactersInRange: NSMakeRange(startOffs, commentLength)];
-				nuSelRange.length -= commentLength;
-			}
-			else
-			{
-				[str insertString: commentPrefix atIndex: startOffs];
-				nuSelRange.length += commentPrefixLength;
-			}
-		}
-		
-		if( x == 0 )
-			break;
-	}
-	
-	[[self view] setSelectedRange: nuSelRange];
-	[[self undoManager] endUndoGrouping];
-	
-}
-
-
-// -----------------------------------------------------------------------------
-//	validateMenuItem:
-//		Make sure check marks of the "Toggle auto syntax coloring" and "Maintain
-//		indentation" menu items are set up properly.
-// -----------------------------------------------------------------------------
-
--(BOOL)	validateMenuItem: (NSMenuItem*)menuItem
-{
-	if( [menuItem action] == @selector(toggleMaintainIndentation:) )
-	{
-		[menuItem setState: [self maintainIndentation]];
+- (BOOL)validateMenuItem:(NSMenuItem*)menuItem {
+	if(menuItem.action == @selector(toggleMaintainIndentation:)) {
+		menuItem.state = self.maintainIndentation;
 		return YES;
 	}
-    else if( [menuItem action] == @selector(toggleWrapsLines:)) {
-        [menuItem setState: [self wrapsLines]];
+    else if(menuItem.action == @selector(toggleWrapsLines:)) {
+        menuItem.state = self.wrapsLines;
         return YES;
     }
-    else if( [menuItem action] == @selector(takeTabDepth:)) {
-        [menuItem setState: (self.tabDepth == [menuItem tag]) ];
+    else if(menuItem.action == @selector(takeTabDepth:)) {
+        menuItem.state = (self.tabDepth == menuItem.tag);
         return YES;
     }
-    else if( [menuItem action] == @selector(toggleIndentsWithSpaces:)) {
-        [menuItem setState: self.indentsWithSpaces];
+    else if(menuItem.action == @selector(toggleIndentsWithSpaces:)) {
+        menuItem.state = self.indentsWithSpaces;
         return YES;
     }
-    else if( [menuItem action] == @selector(toggleShowsLineNumbers:) ) {
-        [menuItem setState: self.showsLineNumbers];
+    else if(menuItem.action == @selector(toggleShowsLineNumbers:)) {
+        menuItem.state = self.showsLineNumbers;
         return YES;
     }
-	else
-		return [super validateMenuItem: menuItem];
+	else {
+        return YES;
+    }
 }
 
-
-// -----------------------------------------------------------------------------
-//	recolorCompleteFile:
-//		IBAction to do a complete recolor of the whole friggin' document.
-//		This is called once after the document's been loaded and leaves some
-//		custom styles in the document which are used by recolorRange to properly
-//		perform recoloring of parts.
-// -----------------------------------------------------------------------------
-
--(IBAction)	recolorCompleteFile: (id)sender
-{
-	NSRange		range = NSMakeRange( 0, [[[self view] textStorage] length] );
+- (IBAction)recolorCompleteFile:(id)sender {
+	NSRange range = NSMakeRange(0, self.view.textStorage.length);
 	[self recolorRange: range];
 }
 
-
-// -----------------------------------------------------------------------------
-//	recolorRange:
-//		Try to apply syntax coloring to the text in our text view. This
-//		overwrites any styles the text may have had before. This function
-//		guarantees that it'll preserve the selection.
-//		
-//		Note that the order in which the different things are colorized is
-//		important. E.g. identifiers go first, followed by comments, since that
-//		way colors are removed from identifiers inside a comment and replaced
-//		with the comment color, etc. 
-//		
-//		The range passed in here is special, and may not include partial
-//		identifiers or the end of a comment. Make sure you include the entire
-//		multi-line comment etc. or it'll lose color.
-// -----------------------------------------------------------------------------
-
--(void)		recolorRange: (NSRange)range
-{	
-	if(self.view == nil || range.length == 0 )	// Don't like doing useless stuff.
+- (void)recolorRange:(NSRange)range {	
+    //		The range passed in here is special, and may not include partial
+    //		identifiers or the end of a comment. Make sure you include the entire
+    //		multi-line comment etc. or it'll lose color.
+    
+	if(self.view == nil || range.length == 0 )	{
+        // Don't like doing useless stuff.
 		return;
+    }
     
     if(self.recoloring) {
         // Prevent endless loop when recoloring's changes cause processEditing to fire again.
@@ -844,15 +676,10 @@ static void * const KVO = (void*)&KVO;
     }
 }
 
-// -----------------------------------------------------------------------------
-//	textViewDidChangeSelection:
-//		Delegate method called when our selection changes. Updates our status
-//		display to indicate which characters are selected.
-// -----------------------------------------------------------------------------
-
 - (void)textViewDidChangeSelection:(NSNotification *)notification {
     NSTextView * textView = notification.object;
     
+    // Update lineNumberView's highlighted lines
     ASKLocation startLocation = textView.locationOfBeginningOfSelection;
     ASKLocation endLocation = textView.locationOfEndOfSelection;
 	
@@ -863,29 +690,13 @@ static void * const KVO = (void*)&KVO;
     }
 }
 
-// -----------------------------------------------------------------------------
-//	defaultTextAttributes
-//		Return the text attributes to use for the text in our text view.
-// -----------------------------------------------------------------------------
-
--(NSDictionary*)	defaultTextAttributes
-{
+- (NSDictionary*)defaultTextAttributes {
 	return @{ NSFontAttributeName: self.view.font, NSParagraphStyleAttributeName: self.view.defaultParagraphStyle };
 }
 
-
-// -----------------------------------------------------------------------------
-//	defaultSelectedRange
-//		Put selection at top like Project Builder has it, so user sees it. You
-//		can also override this and save/restore the selection for each document.
-// -----------------------------------------------------------------------------
-
--(NSRange)	defaultSelectedRange
-{
+- (NSRange)defaultSelectedRange {
 	return NSMakeRange(0,0);
 }
-
-// Tab depth
 
 - (void)setTabDepth:(NSUInteger)tabDepth {
     _tabDepth = tabDepth;
@@ -918,8 +729,6 @@ static void * const KVO = (void*)&KVO;
     [self.view.layoutManager invalidateLayoutForCharacterRange:NSMakeRange(0, self.view.textStorage.length) actualCharacterRange:NULL];
 }
 
-// Indents with spaces
-
 - (void)toggleIndentsWithSpaces:(id)sender {
     self.indentsWithSpaces = !self.indentsWithSpaces;
     [self propagateValue:@(self.indentsWithSpaces) forBinding:@"indentsWithSpaces"];
@@ -936,6 +745,18 @@ static void * const KVO = (void*)&KVO;
         [textView insertText:[self indentation]];
         return YES;
     }
+    else if(commandSelector == @selector(deleteBackward:)) {
+        if(textView.selectedRange.location != 0) {
+            NSRange lineRange = [textView.string lineRangeForRange:textView.selectedRange];
+            NSRange leadingWhitespaceRange = [textView.string rangeOfCharacterFromSet:[NSCharacterSet.whitespaceCharacterSet invertedSet] options:0 range:lineRange];
+            leadingWhitespaceRange = NSMakeRange(lineRange.location, leadingWhitespaceRange.location - lineRange.location);
+            
+            if(NSLocationInRange(textView.selectedRange.location - 1, leadingWhitespaceRange)) {
+                [self unindentSelection:textView];
+                return YES;
+            }
+        }
+    }
     return NO;
 }
 
@@ -950,8 +771,6 @@ static void * const KVO = (void*)&KVO;
     }
     return str;
 }
-
-// Line numbers
 
 - (void)setShowsLineNumbers:(BOOL)showsLineNumbers {
     _showsLineNumbers = showsLineNumbers;

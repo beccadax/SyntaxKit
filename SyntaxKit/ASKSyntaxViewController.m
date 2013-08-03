@@ -445,6 +445,7 @@ static void * const KVO = (void*)&KVO;
 
 - (void)insertIndentationIntoString:(NSMutableString*)str atIndex:(NSUInteger)i adjustingRange:(NSRangePointer)range {
     NSString * indent = [self indentation];
+    
     [str insertString:indent atIndex:i + 1];
     range->length += indent.length;
 }
@@ -479,8 +480,10 @@ static void * const KVO = (void*)&KVO;
         range->length--;
     }
     else {
-        for(NSUInteger j = 0; (j < 4 /* XXX */) && (i + j + 1 <= lastIndex); j++) {
-            if([str characterAtIndex:i + 1] != ' ') {
+        NSString * indent = [self indentation];
+        
+        for(NSUInteger j = 0; (j < indent.length) && (i + j + 1 <= lastIndex); j++) {
+            if([str characterAtIndex:i + 1] != [str characterAtIndex:j]) {
                 break;
             }
             [str deleteCharactersInRange:NSMakeRange(i + 1, 1)];

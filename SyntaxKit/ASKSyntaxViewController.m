@@ -443,11 +443,20 @@ static void * const KVO = (void*)&KVO;
     return selRange;
 }
 
+- (void)adjustRange:(NSRangePointer)range forLengthChange:(NSInteger)delta atIndex:(NSUInteger)i {
+    if(NSLocationInRange(i, *range)) {
+        range->length += delta;
+    }
+    else if(i < range->location) {
+        range->location += delta;
+    }
+}
+
 - (void)insertIndentationIntoString:(NSMutableString*)str atIndex:(NSUInteger)i adjustingRange:(NSRangePointer)range {
     NSString * indent = [self indentation];
     
-    [str insertString:indent atIndex:i + 1];
-    range->length += indent.length;
+    [str insertString:indent atIndex:i];
+    [self adjustRange:range forLengthChange:indent.length atIndex:i];
 }
 
 - (IBAction)indentSelection:(id)sender {
@@ -455,10 +464,9 @@ static void * const KVO = (void*)&KVO;
         NSRange selRange = self.view.selectedRange, nuSelRange = selRange;
         NSMutableString * str = self.view.textStorage.mutableString;
         
-        // Unselect any trailing returns so we don't indent the next line after a full-line selection.
-        selRange = [self rangeExcludingTrailingNewline:selRange fromString:str];
+        NSRange lineRange = [str lineRangeForRange:selRange];
         
-        for(NSUInteger i = NSMaxRange(selRange) - 1; i >= selRange.location; i--) {
+        for(NSUInteger i = NSMaxRange(lineRange) - 1 - 1; i >= lineRange.location; i--) {
             if([self newlineAtIndex:i ofString:str]) {
                 [self insertIndentationIntoString:str atIndex:i + 1 adjustingRange:&nuSelRange];
             }
@@ -468,26 +476,24 @@ static void * const KVO = (void*)&KVO;
             }
         }
         
-        [self insertIndentationIntoString:str atIndex:nuSelRange.location adjustingRange:&nuSelRange];
+        [self insertIndentationIntoString:str atIndex:lineRange.location adjustingRange:&nuSelRange];
         
         self.view.selectedRange = nuSelRange;
     }];
 }
 
 - (void)removeIndentationFromString:(NSMutableString*)str atIndex:(NSUInteger)i upToIndex:(NSUInteger)lastIndex adjustingRange:(NSRangePointer)range {
-    if([str characterAtIndex:i + 1] == '\t') {
-        [str deleteCharactersInRange:NSMakeRange(i + 1, 1)];
-        range->length--;
+    if([str characterAtIndex:i] == '\t') {
+        [str deleteCharactersInRange:NSMakeRange(i, 1)];
+        [self adjustRange:range forLengthChange:-1 atIndex:i];
     }
     else {
-        NSString * indent = [self indentation];
-        
-        for(NSUInteger j = 0; (j < indent.length) && (i + j + 1 <= lastIndex); j++) {
-            if([str characterAtIndex:i + 1] != [str characterAtIndex:j]) {
+        for(NSUInteger j = 0; (j < self.tabDepth) && (i + j <= lastIndex); j++) {
+            if([str characterAtIndex:i] != ' ') {
                 break;
             }
-            [str deleteCharactersInRange:NSMakeRange(i + 1, 1)];
-            range->length--;
+            [str deleteCharactersInRange:NSMakeRange(i, 1)];
+            [self adjustRange:range forLengthChange:-1 atIndex:i];
         }
     }
 }
@@ -497,17 +503,16 @@ static void * const KVO = (void*)&KVO;
 	NSUInteger lastIndex = selRange.location + selRange.length - 1;
 	NSMutableString * str = self.view.textStorage.mutableString;
 	
-	// Unselect any trailing returns so we don't indent the next line after a full-line selection.
-    selRange = [self rangeExcludingTrailingNewline:selRange fromString:str];
+    NSRange lineRange = [str lineRangeForRange:selRange];
 	
-	if(selRange.length == 0) {
+	if(lineRange.length <= 1) {
 		return;
     }
 	
 	[self withUndo:^{
-        for(NSUInteger i = lastIndex; i >= selRange.location; i--) {
+        for(NSUInteger i = NSMaxRange(lineRange) - 1 - 1; i >= lineRange.location; i--) {
             if([self newlineAtIndex:i ofString:str]) {
-                [self removeIndentationFromString:str atIndex:i upToIndex:lastIndex adjustingRange:&nuSelRange];
+                [self removeIndentationFromString:str atIndex:i + 1 upToIndex:lastIndex adjustingRange:&nuSelRange];
             }
             
             if(i == 0) {
@@ -515,7 +520,7 @@ static void * const KVO = (void*)&KVO;
             }
         }
         
-        [self removeIndentationFromString:str atIndex:nuSelRange.location upToIndex:lastIndex adjustingRange:&nuSelRange];
+        [self removeIndentationFromString:str atIndex:lineRange.location upToIndex:lastIndex adjustingRange:&nuSelRange];
         
         self.view.selectedRange = nuSelRange;
     }];

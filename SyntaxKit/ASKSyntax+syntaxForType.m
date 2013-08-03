@@ -7,45 +7,128 @@
 //
 
 #import "ASKSyntax+syntaxForType.h"
+#import <ArchDirectoryObserver/ArchDirectoryObserver.h>
+
+NSString * const ASKSyntaxWillInvalidateSyntaxesNotification = @"ASKSyntaxWillInvalidateSyntaxes";
+NSString * const ASKSyntaxDidInvalidateSyntaxesNotification = @"ASKSyntaxDidInvalidateSyntaxes";
+
+static NSMutableDictionary * Syntaxes = nil;
+
+@interface ASKUserSyntaxDirectoryObserver : NSObject <ArchDirectoryObserver>
+
+@end
 
 @implementation ASKSyntax (syntaxForType)
 
-+ (NSURL*)URLForSyntaxDefinitionNamed:(NSString*)name {
-    return [[NSBundle bundleForClass:self] URLForResource:name withExtension:@"plist" subdirectory:@"Syntax Definitions"];
++ (void)invalidateSyntaxes {
+    [NSNotificationCenter.defaultCenter postNotificationName:ASKSyntaxWillInvalidateSyntaxesNotification object:self];
+    Syntaxes = nil;
+    [NSNotificationCenter.defaultCenter postNotificationName:ASKSyntaxDidInvalidateSyntaxesNotification object:self];
 }
 
-+ (NSDictionary*)syntaxDefinitionFileNames {
-    static NSDictionary * singleton;
-    static dispatch_once_t once;
++ (NSURL *)userSyntaxesURL {
+    NSURL * appSupportURL = [[NSFileManager new] URLForDirectory:NSApplicationSupportDirectory inDomain:NSUserDomainMask appropriateForURL:nil create:YES error:NULL];
+    return [appSupportURL URLByAppendingPathComponent:@"Syntax Definitions"];
+}
+
++ (NSURL *)mainBundleSyntaxesURL {
+    return [[NSBundle mainBundle] URLForResource:@"Syntax Definitions" withExtension:nil];    
+}
+
++ (NSURL *)kitBundleSyntaxesURL {
+    return [[NSBundle bundleForClass:self] URLForResource:@"Syntax Definitions" withExtension:nil];
+}
+
++ (void)loadSyntaxesFromURL:(NSURL*)URL {
+    if(!URL) {
+        return;
+    }
     
-    dispatch_once(&once, ^{
-        singleton = [NSDictionary dictionaryWithContentsOfURL:[self URLForSyntaxDefinitionNamed:@"types"]];
-    });
+    NSDirectoryEnumerator * contents = [[NSFileManager new] enumeratorAtURL:URL includingPropertiesForKeys:@[ ] options:NSDirectoryEnumerationSkipsHiddenFiles errorHandler:NULL];
     
-    return singleton;
+    for(NSURL * syntaxURL in contents) {
+        NSString * type;
+        if(![syntaxURL getResourceValue:&type forKey:NSURLTypeIdentifierKey error:NULL]) {
+            continue;
+        }
+        if(!UTTypeConformsTo((__bridge CFStringRef)type, CFSTR("com.architechies.frameworks.SyntaxKit.syntaxDefinition"))) {
+            continue;
+        }
+        
+        ASKSyntax * syntax = [[ASKSyntax alloc] initWithDefinitionURL:syntaxURL];
+        
+        for(NSString * sourceType in syntax.preferredUTIs) {
+            if(Syntaxes[sourceType]) {
+                // Another syntax is at least compatible with this UTI...
+                ASKSyntax * otherSyntax = Syntaxes[sourceType];
+                if([otherSyntax.preferredUTIs containsObject:sourceType]) {
+                    // Actually, it's preferred too.
+                    continue;
+                }
+            }
+            Syntaxes[sourceType] = syntax;
+        }
+        for(NSString * sourceType in syntax.compatibleUTIs) {
+            if(Syntaxes[sourceType]) {
+                // Another syntax is already compatible with this UTI
+                continue;
+            }
+            Syntaxes[sourceType] = syntax;
+        }
+    }
 }
 
 + (instancetype)syntaxForType:(NSString*)type {
-    static NSMutableDictionary * syntaxes;
-    static dispatch_once_t once;
-    
-    dispatch_once(&once, ^{
-        syntaxes = [NSMutableDictionary new];
-    });
-    
-    NSString * fileName = self.class.syntaxDefinitionFileNames[type];
-    if(!fileName) {
-        return nil;
+    if(!Syntaxes) {
+        static ASKUserSyntaxDirectoryObserver * observer;
+        static dispatch_once_t once;
+        
+        dispatch_once(&once, ^{
+            observer = [ASKUserSyntaxDirectoryObserver new];
+            
+            NSAssert(UTTypeConformsTo(CFSTR("com.architechies.frameworks.SyntaxKit.syntaxDefinition"), CFSTR("com.apple.property-list")), @"The syntaxDefinition UTI hasn't been registered! Have you copied SyntaxKit-Info.plist's UTExportedTypeDeclarations to your app?");
+        });
+        
+        Syntaxes = [NSMutableDictionary new];
+        [self loadSyntaxesFromURL:[self userSyntaxesURL]];
+        [self loadSyntaxesFromURL:[self mainBundleSyntaxesURL]];
+        [self loadSyntaxesFromURL:[self kitBundleSyntaxesURL]];
     }
     
-    ASKSyntax * syntax = syntaxes[fileName];
-    if(!syntax) {
-        NSURL * defintionURL = [self URLForSyntaxDefinitionNamed:fileName];
-        syntax = [[self alloc] initWithDefinitionURL:defintionURL];
-        syntaxes[fileName] = syntax;
+    return Syntaxes[type];
+}
+
+@end
+
+@implementation ASKUserSyntaxDirectoryObserver
+
+- (id)init {
+    if((self = [super init])) {
+        [[ASKSyntax userSyntaxesURL] addDirectoryObserver:self options:ArchDirectoryObserverResponsive resumeToken:nil];
     }
-    
-    return syntax;
+    return self;
+}
+
+- (void)dealloc {
+    [[ASKSyntax userSyntaxesURL] removeDirectoryObserver:self];
+}
+
+- (void)observedDirectory:(NSURL *)observedURL ancestorAtURLDidChange:(NSURL *)changedURL historical:(BOOL)historical resumeToken:(ArchDirectoryObservationResumeToken)resumeToken {
+    if(!historical) {
+        [ASKSyntax invalidateSyntaxes];
+    }
+}
+
+- (void)observedDirectory:(NSURL *)observedURL childrenAtURLDidChange:(NSURL *)changedURL historical:(BOOL)historical resumeToken:(ArchDirectoryObservationResumeToken)resumeToken {
+    if(!historical) {
+        [ASKSyntax invalidateSyntaxes];
+    }
+}
+
+- (void)observedDirectory:(NSURL *)observedURL descendantsAtURLDidChange:(NSURL *)changedURL reason:(ArchDirectoryObserverDescendantReason)reason historical:(BOOL)historical resumeToken:(ArchDirectoryObservationResumeToken)resumeToken {
+    if(!historical) {
+        [ASKSyntax invalidateSyntaxes];
+    }
 }
 
 @end

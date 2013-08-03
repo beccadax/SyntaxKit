@@ -9,7 +9,7 @@
 	<key>CFBundleIconFile</key>
 	<string></string>
 	<key>CFBundleIdentifier</key>
-	<string>com.architechies.${PRODUCT_NAME:rfc1034identifier}</string>
+	<string>com.architechies.frameworks.${PRODUCT_NAME:rfc1034identifier}</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
@@ -21,10 +21,53 @@
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string>0.36.5</string>
+	<string>0.38.3</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>Copyright © 2013 Architechies. All rights reserved.</string>
 	<key>NSPrincipalClass</key>
 	<string></string>
+	<key>UTExportedTypeDeclarations</key>
+	<array>
+		<dict>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.plain-text</string>
+				<string>com.apple.dashcode.css</string>
+				<string>com.panic.coda.css</string>
+			</array>
+			<key>UTTypeDescription</key>
+			<string>CSS Document</string>
+			<key>UTTypeIdentifier</key>
+			<string>org.w3.cascading-style-sheet</string>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>css</string>
+				</array>
+				<key>public.mime-type</key>
+				<array>
+					<string>text/css</string>
+				</array>
+			</dict>
+		</dict>
+		<dict>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>com.apple.property-list</string>
+			</array>
+			<key>UTTypeDescription</key>
+			<string>Syntax Definition</string>
+			<key>UTTypeIdentifier</key>
+			<string>com.architechies.frameworks.SyntaxKit.syntaxDefinition</string>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>syntaxDefinition</string>
+				</array>
+			</dict>
+		</dict>
+	</array>
 </dict>
 </plist>

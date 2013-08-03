@@ -1,0 +1,3 @@
+[submodule "ArchDirectoryObserver"]
+	path = ArchDirectoryObserver
+	url = git@github.com:brentdax/ArchDirectoryObserver.git
